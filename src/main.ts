@@ -70,3 +70,5 @@ Object.assign(window, {
     run: (frames: number) => { for (let f = 0; f < frames; f++) game.tick(); game.draw(0); },
   },
 });
+// an ideal player, to show a climb (?autopilot): see dev/autopilot.ts
+if (query.has('autopilot')) import('./dev/autopilot').then((m) => m.start(game));
