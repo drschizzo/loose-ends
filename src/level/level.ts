@@ -1,0 +1,154 @@
+// What a level is made of. A level is a wall some metres high, seen from the
+// side. Everything that stands still is a bar (a capsule from the wall to the
+// glass), a shelf or a gate (boxes) or an eyelet (a ring of short capsules):
+// exactly the static shapes the solver knows. Everything that moves is a
+// cord: the lace, and the cords of the level (hanging, draped over a bar, a
+// skein of yarn, a pull, a line strung between two hooks, a net or a rope
+// ladder knotted together).
+//
+// The room is 20 cm deep, between the wall and an invisible pane of glass: the
+// lace moves in a plane, but has room to cross over itself, and over and
+// under the other cords.
+//
+// A level is plain data: the course is made of sections, each a level of
+// its own, merged into the one that is built.
+
+export type Mat = 'wood' | 'chrome' | 'rubber' | 'gold' | 'wall' | 'floor' | 'eyelet' | 'gate';
+
+/**
+ * What a surface is made of: its friction, how an end grips it (× the stamina
+ * it costs; 0: it cannot), how it wears the lace sliding over it (×), how it looks
+ */
+export const MATS: Record<Mat, { mu: number; grip: number; wear: number; color: string; metalness: number; roughness: number }> = {
+  wood: { mu: 0.45, grip: 1, wear: 1, color: '#b07a45', metalness: 0, roughness: 0.7 },
+  chrome: { mu: 0.1, grip: 0, wear: 0.2, color: '#d8dde2', metalness: 1, roughness: 0.15 },
+  rubber: { mu: 1.0, grip: 0.5, wear: 0.4, color: '#b8322a', metalness: 0, roughness: 0.9 },
+  gold: { mu: 0.5, grip: 1, wear: 0.6, color: '#e2b13c', metalness: 0.8, roughness: 0.35 },
+  wall: { mu: 0.05, grip: 0, wear: 0, color: '#000000', metalness: 0, roughness: 1 },
+  floor: { mu: 0.5, grip: 0, wear: 0.5, color: '#8a5a33', metalness: 0, roughness: 0.8 },
+  eyelet: { mu: 0.15, grip: 0, wear: 0.8, color: '#c7ccd2', metalness: 1, roughness: 0.25 },
+  gate: { mu: 0.3, grip: 0, wear: 0.6, color: '#5a6b7c', metalness: 0.3, roughness: 0.5 },
+};
+
+/** half the width of the room, half its depth */
+export const ROOM = { x: 0.85, z: 0.1 };
+
+export type Vec2 = [number, number];
+/** a bar across the room; a gold one is a post, where the lace saves its progress */
+export interface Bar { x: number; y: number; r: number; mat: Mat }
+export interface Shelf { x0: number; x1: number; y: number; mat?: Mat }
+/** a cord hanging from a hook */
+export interface Hang { x: number; top: number; length: number }
+/**
+ * An eyelet the lace can be threaded through, a ring of radius r whose axis
+ * turns `turn` (rad) from x towards z: 0, a hole facing sideways (seen edge on),
+ * π/2 a hole facing us. Up, the axis is vertical (the hole faces up).
+ */
+export interface Ring { x: number; y: number; r: number; turn?: number; up?: boolean }
+/**
+ * A gate (a box), a trapdoor in a floor. It opens when all its rings hold the
+ * lace at once, or all its pulls are pulled at once, or its post (a bar) has
+ * saved the lace. `held`: it shuts again as soon as its pulls are let go.
+ * `period`: it opens and shuts by itself, open half the time (s).
+ */
+export interface Gate { x0: number; x1: number; y0: number; y1: number; rings?: number[]; pulls?: number[]; post?: number; held?: boolean; period?: number }
+/** a bar that moves back and forth: by (dx, dy) either way from where it is, over `period` seconds */
+export interface Mover { bar: number; dx: number; dy: number; period: number; phase: number }
+/**
+ * Something that harms the lace where it touches it, a box from (x0, y0) to
+ * (x1, y1): a blade cuts it at once, a flame burns it if it stays, water
+ * soaks it (shorter and heavier until it dries).
+ */
+export interface Hazard { kind: 'blade' | 'flame' | 'water'; x0: number; y0: number; x1: number; y1: number }
+/** a pull: a cord hanging from a switch, which clicks when something hangs on it */
+export interface Pull { x: number; top: number; length: number }
+/** a skein of yarn: `count` strands hanging from one hook, crossing over one another */
+export interface Skein { x: number; top: number; length: number; count: number; color: string }
+/** loose cords draped over a bar, `left` of them on its left (the rest on the right) */
+export interface Drape { bar: number; length: number; left: number; color: string }
+/** a line strung between two hooks, `slack` (m) longer than the gap between them: it sags, more under a load */
+export interface Line { x0: number; y0: number; x1: number; y1: number; slack: number; color?: string }
+/**
+ * A net hanging from its top edge: `cols` cords down, `rows` across, knotted
+ * where they cross (a strap round the two nodes there), `tied` at the bottom
+ * too or hanging free. With two cols and `ladder`, a rope ladder: the rungs
+ * span the rails, and are stiff.
+ */
+export interface Net { x0: number; x1: number; top: number; bottom: number; cols: number; rows: number; tied?: boolean; color?: string; ladder?: boolean }
+/** words of help, shown while the lace is within r of (x, y) (and its gate, if any, is shut) */
+export interface Tip { x: number; y: number; r: number; text: string; gate?: number }
+
+export interface Level {
+  /** the height it spans (m): the room's walls go from bottom to top */
+  bottom: number;
+  top: number;
+  bars: Bar[];
+  shelves: Shelf[];
+  hangs: Hang[];
+  rings: Ring[];
+  gates: Gate[];
+  pulls: Pull[];
+  skeins: Skein[];
+  drapes: Drape[];
+  lines: Line[];
+  nets: Net[];
+  movers: Mover[];
+  hazards: Hazard[];
+  buttons: Vec2[];
+  tips: Tip[];
+  /** where the lace starts: lying on the floor */
+  start: { x0: number; x1: number; y: number };
+}
+
+export const bar = (x: number, y: number, mat: Mat = 'wood', r = 0.016): Bar => ({ x, y, r, mat });
+
+/** a level with nothing in it yet */
+export function emptyLevel(bottom = 0, top = 0): Level {
+  return {
+    bottom, top,
+    bars: [], shelves: [], hangs: [], rings: [], gates: [], pulls: [], skeins: [], drapes: [], lines: [], nets: [], movers: [], hazards: [],
+    buttons: [], tips: [],
+    start: { x0: -0.55, x1: 0.55, y: 0.01 },
+  };
+}
+
+/**
+ * Levels one above the other made one: their elements together, what refers
+ * to an element by its index (a drape to its bar, a gate to its rings, pulls
+ * and post, a tip to its gate) shifted to where it lands.
+ */
+export function merge(parts: Level[]): Level {
+  const L = emptyLevel(Math.min(...parts.map((p) => p.bottom)), Math.max(...parts.map((p) => p.top)));
+  for (const p of parts) {
+    const bars = L.bars.length, rings = L.rings.length, pulls = L.pulls.length, gates = L.gates.length;
+    L.bars.push(...p.bars);
+    L.shelves.push(...p.shelves);
+    L.hangs.push(...p.hangs);
+    L.rings.push(...p.rings);
+    L.pulls.push(...p.pulls);
+    L.skeins.push(...p.skeins);
+    L.lines.push(...p.lines);
+    L.nets.push(...p.nets);
+    L.buttons.push(...p.buttons);
+    L.hazards.push(...p.hazards);
+    L.drapes.push(...p.drapes.map((d) => ({ ...d, bar: d.bar + bars })));
+    L.movers.push(...p.movers.map((m) => ({ ...m, bar: m.bar + bars })));
+    L.gates.push(...p.gates.map((g) => ({
+      ...g,
+      rings: g.rings?.map((r) => r + rings),
+      pulls: g.pulls?.map((q) => q + pulls),
+      post: g.post === undefined ? undefined : g.post + bars,
+    })));
+    L.tips.push(...p.tips.map((t) => ({ ...t, gate: t.gate === undefined ? undefined : t.gate + gates })));
+  }
+  const first = parts.find((p) => p.bottom === L.bottom);
+  if (first) L.start = first.start;
+  return L;
+}
+
+/**
+ * What tells an element from the others, from one build of the level to the
+ * next: where it is. The endless course builds the same element again at the
+ * same place, so what happened to it (a gate opened, a button taken) holds.
+ */
+export const placeKey = (x: number, y: number): string => `${x.toFixed(3)},${y.toFixed(3)}`;

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Loose Ends</title>
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div id="hud">
+    <div class="row"><span id="time">0:00:00</span><span id="buttons">0 bouton</span><span>hauteur <b id="height">0.0 m</b></span></div>
+  </div>
+  <div id="ends">
+    <div class="end" id="end0"><span class="key">clic gauche<small>ou A</small></span><div><b>Tête</b> <em></em><div class="bar" title="force de la prise"><i></i></div></div></div>
+    <div class="end" id="end1"><span class="key">clic droit<small>ou D</small></span><div><b>Queue</b> <em></em><div class="bar" title="force de la prise"><i></i></div></div></div>
+  </div>
+  <div id="hint"></div>
+  <div id="toast"></div>
+  <div id="title" class="screen">
+    <h1>LOOSE ENDS</h1>
+    <p class="tag">Un lacet. Deux bouts. Des fils partout. Grimpe.</p>
+    <p class="keys"><b class="head">clic gauche</b> / <b class="tail">clic droit</b> : un bout s'accroche · la souris : l'autre bout · Espace : se faufiler · R : dernier poteau</p>
+    <div class="buttons"><button id="resume" class="hidden"></button><button id="fresh">Nouvelle montée</button></div>
+  </div>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

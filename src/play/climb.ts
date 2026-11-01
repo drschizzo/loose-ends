@@ -1,0 +1,88 @@
+// A climb: the course of a seed, played from post to post for as long as the
+// lace holds, and kept between visits (where the lace was last saved, the
+// best height, the time played).
+
+import { Course } from '../gen/course';
+import { placeKey, type Level } from '../level/level';
+import type { Save } from './rules';
+
+/** what is kept of a climb between two visits */
+interface Kept { seed: number; section: number; pos: number[]; best: number; time: number }
+
+const KEY = 'loose-ends:climb';
+
+export class Climb {
+  readonly course: Course;
+  /** the section whose post the lace last saved on (0: the start) */
+  private section = 0;
+  private pos: Float64Array | null = null;
+  private best = 0;
+  /** seconds played before this visit, and when it was last kept */
+  private before = 0;
+  private keptAt = 0;
+
+  /** the climb left last time, if any */
+  static kept(): Kept | null {
+    try { return JSON.parse(localStorage.getItem(KEY) ?? 'null'); } catch { return null; }
+  }
+
+  /** a climb of course `seed`, from the start or (`kept`) from where it was left */
+  constructor(seed: number, kept: Kept | null = null) {
+    this.course = new Course(seed);
+    if (kept) {
+      this.section = kept.section;
+      this.pos = kept.pos.length ? Float64Array.from(kept.pos) : null;
+      this.best = kept.best;
+      this.before = kept.time;
+    }
+  }
+
+  /** what tells it from other climbs: the wallpaper, the jitter of its skeins */
+  get look(): number { return 2 + this.course.seed; }
+
+  /** the level to build now: the window of the course around the last post */
+  level(): Level { return this.course.window(this.section); }
+
+  /** where the lace is in it (null: lying at the start) */
+  lace(): Float64Array | null { return this.pos; }
+
+  /** the save it goes on from (left on a post, last time), if any */
+  resumed(): Save | null {
+    if (!this.pos) return null;
+    const post = this.course.section(this.section).level.bars.find((b) => b.mat === 'gold');
+    return post ? { post: placeKey(post.x, post.y), pos: this.pos } : null;
+  }
+
+  /** the lace saved on a post: whether the window moved (up to the next post), and the world must be built again */
+  saved(save: Save): boolean {
+    let k = this.section;
+    for (let i = this.section + 1; i <= this.course.nextPost(this.section + 1); i++) {
+      if (this.course.section(i).level.bars.some((b) => b.mat === 'gold' && placeKey(b.x, b.y) === save.post)) k = i;
+    }
+    if (k === this.section) return false;
+    this.section = k;
+    this.pos = save.pos;
+    this.keep(this.keptAt);
+    return true;
+  }
+
+  /** the lace at height y after `time` seconds of play this visit: the best height, kept every few seconds of play */
+  track(y: number, time: number): void {
+    this.best = Math.max(this.best, y);
+    if (time - this.keptAt >= 3) this.keep(time);
+  }
+
+  /** the progress shown at the top */
+  shown(y: number, time: number): { time: string; height: string } {
+    return { time: clock(this.before + time), height: `${Math.max(0, y).toFixed(1)} m (max ${this.best.toFixed(0)})` };
+  }
+
+  /** what is kept for next time, `time` seconds into this visit */
+  private keep(time: number): void {
+    this.keptAt = time;
+    const kept: Kept = { seed: this.course.seed, section: this.section, pos: this.pos ? Array.from(this.pos) : [], best: this.best, time: this.before + time };
+    try { localStorage.setItem(KEY, JSON.stringify(kept)); } catch { /* private window */ }
+  }
+}
+
+const clock = (s: number) => `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(Math.floor(s) % 60).padStart(2, '0')}`;

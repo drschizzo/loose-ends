@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@drschizzo/avbd-cables": ["../cable-kit/packages/avbd-cables/src/index.ts"],
+      "@drschizzo/three-cable-tubes": ["../cable-kit/packages/three-cable-tubes/src/index.ts"],
+      "three": ["./node_modules/@types/three"],
+      "three/*": ["./node_modules/@types/three/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
