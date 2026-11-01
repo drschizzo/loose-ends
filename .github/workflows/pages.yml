@@ -1,0 +1,63 @@
+# Builds the game and publishes it on GitHub Pages, at each push to main.
+#
+# The game reads the engine from the sources of cable-kit, next to its own
+# folder (see vite.config.ts): both are checked out side by side. The engine
+# is pinned to a commit of cable-kit; bump CABLE_KIT when the game needs a
+# newer one (that commit must be on GitHub).
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  CABLE_KIT: 72c156ebf87919dd78a56ed079e6ace91d30c28a
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: loose-ends
+      - uses: actions/checkout@v4
+        with:
+          repository: drschizzo/cable-kit
+          ref: ${{ env.CABLE_KIT }}
+          path: cable-kit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: loose-ends/package-lock.json
+      - run: npm ci
+        working-directory: loose-ends
+      - run: npx tsc
+        working-directory: loose-ends
+      - run: npx vite build
+        working-directory: loose-ends
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: loose-ends/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

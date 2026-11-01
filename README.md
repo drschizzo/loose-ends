@@ -1,6 +1,8 @@
 # Loose Ends
 
-Un lacet échappé d'une basket grimpe parmi des fils. Prototype du concept, bâti sur le moteur de câbles [cable-kit](../cable-kit) (solveur AVBD et tubes three.js). La réflexion de fond (ce que seul ce moteur permet, et comment varier les niveaux) est dans [DESIGN.md](DESIGN.md).
+Un lacet échappé d'une basket grimpe parmi des fils. Prototype du concept, bâti sur le moteur de câbles [cable-kit](https://github.com/drschizzo/cable-kit) (solveur AVBD et tubes three.js). La réflexion de fond (ce que seul ce moteur permet, et comment varier les niveaux) est dans [DESIGN.md](DESIGN.md).
+
+**[Jouer en ligne](https://drschizzo.github.io/loose-ends/)** : la version publiée à chaque push sur `main` (GitHub Actions, [.github/workflows/pages.yml](.github/workflows/pages.yml), qui construit le jeu avec cable-kit à côté, au commit fixé dans `CABLE_KIT`).
 
 ```bash
 npm install
