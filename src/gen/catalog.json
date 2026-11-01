@@ -1,1821 +1,2482 @@
 {
-  "course": {
-    "twistFrom": 12,
-    "heavy": 100,
-    "cap": {
-      "base": 3,
-      "every": 15,
-      "most": 3
-    },
-    "stretch": {
-      "base": 2,
-      "every": 20,
-      "most": 3,
-      "longer": 0.3
-    }
+ "course": {
+  "twistFrom": 12,
+  "heavy": 100,
+  "cap": {
+   "base": 3,
+   "every": 15,
+   "most": 3
   },
-  "twists": [
-    {
-      "name": "",
-      "gap": 1,
-      "chrome": 0.15,
-      "slack": 0,
-      "rubber": 0.18
-    },
-    {
-      "name": "glissant",
-      "gap": 1,
-      "chrome": 0.6,
-      "slack": 0,
-      "rubber": 0.1
-    },
-    {
-      "name": "lâche",
-      "gap": 1,
-      "chrome": 0.15,
-      "slack": 0.12,
-      "rubber": 0.18
-    },
-    {
-      "name": "sans repos",
-      "gap": 1,
-      "chrome": 0.2,
-      "slack": 0,
-      "rubber": 0
-    },
-    {
-      "name": "espacé",
-      "gap": 1.12,
-      "chrome": 0.15,
-      "slack": 0.04,
-      "rubber": 0.25
-    }
-  ],
-  "favours": {
-    "L'entrée": {
-      "barres": 1.5,
-      "portemanteau": 3
-    },
-    "La penderie": {
-      "rideau de cordes": 3,
-      "fils posés": 1.5,
-      "monte-charge": 2.5,
-      "portemanteau": 1.5
-    },
-    "La chambre des petits": {
-      "échelle de corde": 3,
-      "filet": 2,
-      "chicanes": 2
-    },
-    "L'atelier": {
-      "écheveau": 3,
-      "ciseaux": 2,
-      "œillets": 2,
-      "œillets croisés": 2,
-      "colonne d'œillets": 2,
-      "fils de couture": 3
-    },
-    "La buanderie": {
-      "fils à linge": 3,
-      "cascade": 3,
-      "traversée": 1.5,
-      "radiateur": 2.5,
-      "courant d'air": 2
-    },
-    "Le salon": {
-      "barres mobiles": 2,
-      "bougies": 2.5,
-      "pendule": 2,
-      "horloge": 3
-    },
-    "La chambre": {
-      "fils posés": 2,
-      "tirette": 2,
-      "deux tirettes": 2,
-      "lampe qui cherche": 3
-    },
-    "Le grenier": {
-      "forêt de lianes": 2.5,
-      "filet": 2,
-      "corde lisse": 2,
-      "toile d'araignée": 3,
-      "lampe qui cherche": 1.5
-    },
-    "Le toit": {
-      "corde lisse": 2,
-      "pendule": 2,
-      "escalier de chrome": 2,
-      "courant d'air": 2.5,
-      "tyrolienne": 2
-    },
-    "La nuit": {
-      "pendule": 2,
-      "fils posés": 1.5,
-      "tyrolienne": 2
-    },
-    "L'aube": {
-      "fils à linge": 2,
-      "filet": 1.5
-    }
+  "stretch": {
+   "base": 3,
+   "every": 20,
+   "most": 2,
+   "longer": 0.4
+  }
+ },
+ "twists": [
+  {
+   "name": "",
+   "gap": 1,
+   "chrome": 0.15,
+   "slack": 0,
+   "rubber": 0.18
   },
-  "ascents": [
+  {
+   "name": "glissant",
+   "gap": 1,
+   "chrome": 0.6,
+   "slack": 0,
+   "rubber": 0.1
+  },
+  {
+   "name": "lâche",
+   "gap": 1,
+   "chrome": 0.15,
+   "slack": 0.12,
+   "rubber": 0.18
+  },
+  {
+   "name": "sans repos",
+   "gap": 1,
+   "chrome": 0.2,
+   "slack": 0,
+   "rubber": 0
+  },
+  {
+   "name": "espacé",
+   "gap": 1.12,
+   "chrome": 0.15,
+   "slack": 0.04,
+   "rubber": 0.25
+  }
+ ],
+ "favours": {
+  "L'entrée": {
+   "barres": 1.5,
+   "portemanteau": 3
+  },
+  "La penderie": {
+   "rideau de cordes": 3,
+   "fils posés": 1.5,
+   "monte-charge": 2.5,
+   "portemanteau": 1.5
+  },
+  "La chambre des petits": {
+   "échelle de corde": 3,
+   "filet": 2,
+   "chicanes": 2
+  },
+  "L'atelier": {
+   "écheveau": 3,
+   "ciseaux": 2,
+   "œillets": 2,
+   "œillets croisés": 2,
+   "colonne d'œillets": 2,
+   "fils de couture": 3
+  },
+  "La buanderie": {
+   "fils à linge": 3,
+   "cascade": 3,
+   "traversée": 1.5,
+   "radiateur": 2.5,
+   "courant d'air": 2
+  },
+  "Le salon": {
+   "barres mobiles": 2,
+   "bougies": 2.5,
+   "pendule": 2,
+   "horloge": 3
+  },
+  "La chambre": {
+   "fils posés": 2,
+   "tirette": 2,
+   "deux tirettes": 2,
+   "lampe qui cherche": 3
+  },
+  "Le grenier": {
+   "forêt de lianes": 2.5,
+   "filet": 2,
+   "corde lisse": 2,
+   "toile d'araignée": 3,
+   "lampe qui cherche": 1.5
+  },
+  "Le toit": {
+   "corde lisse": 2,
+   "pendule": 2,
+   "escalier de chrome": 2,
+   "courant d'air": 2.5,
+   "tyrolienne": 2
+  },
+  "La nuit": {
+   "pendule": 2,
+   "fils posés": 1.5,
+   "tyrolienne": 2
+  },
+  "L'aube": {
+   "fils à linge": 2,
+   "filet": 1.5
+  }
+ },
+ "ascents": [
+  {
+   "name": "barres",
+   "effort": 1,
+   "from": 0,
+   "weight": 1.5,
+   "rise": [
+    0.45,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "steps": [
     {
-      "name": "barres",
-      "effort": 1,
-      "from": 0,
-      "weight": 1.5,
-      "rise": [
-        0.45,
-        1.4
-      ],
-      "side": "any",
-      "nodes": 0,
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b",
-          "do": [
-            {
-              "op": "decoy",
-              "x": "b.x",
-              "y": "b.y"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "barres mobiles",
-      "effort": 2,
-      "from": 8,
-      "weight": 1.5,
-      "rise": [
-        0.9,
-        1.4
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "Barres mobiles : elles glissent d'un côté à l'autre. Accroche-toi quand elle passe à ta portée, elle t'emmène.",
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b",
-          "do": [
-            {
-              "op": "let",
-              "name": "up",
-              "value": "rnd() < 0.35"
-            },
-            {
-              "op": "let",
-              "name": "room",
-              "value": "0.72 - abs(b.x)"
-            },
-            {
-              "op": "mover",
-              "bar": "b.i",
-              "dx": "up ? 0 : min(0.25, room)",
-              "dy": "up ? 0.15 : 0",
-              "period": "2.5 + 2 * rnd()",
-              "phase": "rnd() * 6.28"
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "bougies",
-      "effort": 2,
-      "from": 11,
-      "weight": 1.2,
-      "rise": [
-        0.9,
-        1.4
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "Bougies : leur flamme brûle le lacet qui s'y attarde, et il raccourcit. Passe vite, ou passe à côté.",
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b",
-          "do": [
-            {
-              "op": "hazard",
-              "kind": "flame",
-              "x0": "b.x - 0.03",
-              "y0": "b.y - 0.45",
-              "x1": "b.x + 0.03",
-              "y1": "b.y - 0.33"
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "cascade",
-      "effort": 2,
-      "from": 13,
-      "weight": 1.2,
-      "rise": [
-        0.9,
-        1.4
-      ],
-      "side": "cross",
-      "nodes": 0,
-      "tip": "Cascade : l'eau trempe le lacet, il rétrécit et s'alourdit le temps de sécher. Traverse-la d'un coup, ou attends d'être sec pour forcer.",
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b"
-        },
-        {
-          "op": "let",
-          "name": "x",
-          "value": "jitter(0.1)"
-        },
-        {
-          "op": "hazard",
-          "kind": "water",
-          "x0": "x - 0.1",
-          "y0": "from.y",
-          "x1": "x + 0.1",
-          "y1": "to.y + 0.6"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "ciseaux",
-      "effort": 3,
-      "from": 17,
-      "weight": 1,
-      "rise": [
-        0.9,
-        1.4
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "Ciseaux : ils coupent le lacet qui les touche, et il lâche tout. Garde-le loin des lames : un poteau le rend entier.",
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b",
-          "do": [
-            {
-              "op": "if",
-              "test": "i % 2 == 0",
-              "then": [
-                {
-                  "op": "let",
-                  "name": "x",
-                  "value": "b.x + jitter(0.08)"
-                },
-                {
-                  "op": "hazard",
-                  "kind": "blade",
-                  "x0": "x - 0.06",
-                  "y0": "b.y - 0.5",
-                  "x1": "x + 0.06",
-                  "y1": "b.y - 0.4"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "rideau de cordes",
-      "effort": 2,
-      "from": 1,
-      "weight": 2,
-      "rise": [
-        1,
-        1.3
-      ],
-      "side": "cross",
-      "nodes": 130,
-      "tip": "Cordes : approche un bout et maintiens son clic, tu t'y suspends et tu te balances jusqu'à la suivante.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "n",
-          "value": "4 + floor(rnd() * 2)"
-        },
-        {
-          "op": "let",
-          "name": "top",
-          "value": "to.y + 0.05"
-        },
-        {
-          "op": "bar",
-          "x": "s * 0.55",
-          "y": "from.y + 0.35"
-        },
-        {
-          "op": "repeat",
-          "count": "n",
-          "as": "i",
-          "do": [
-            {
-              "op": "hang",
-              "clear": [
-                "s * 0.55",
-                "to.x"
-              ],
-              "x": "s * (0.45 - (0.95 * i) / (n - 1))",
-              "top": "top",
-              "length": "top - from.y - 0.5 - 0.12 * rnd()"
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.8",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": 0,
-          "y": "from.y + 0.55"
-        }
-      ]
-    },
-    {
-      "name": "fils posés",
-      "effort": 2,
-      "from": 2,
-      "weight": 2,
-      "rise": [
-        1.2,
-        1.35
-      ],
-      "side": "cross",
-      "nodes": 60,
-      "tip": "Fil posé sur du chrome : il glisse sous ton poids. Sur du caoutchouc, le frottement le retient.",
-      "steps": [
-        {
-          "op": "bar",
-          "as": "glisse",
-          "x": "s * 0.35 + jitter(0.08)",
-          "y": "from.y + 0.45",
-          "mat": "chrome",
-          "r": 0.018
-        },
-        {
-          "op": "drape",
-          "bar": "glisse.i",
-          "length": 0.6,
-          "left": 0.5,
-          "color": "pick(COLORS)"
-        },
-        {
-          "op": "bar",
-          "as": "tient",
-          "x": "-s * 0.4 + jitter(0.08)",
-          "y": "from.y + 0.9",
-          "mat": "rubber"
-        },
-        {
-          "op": "drape",
-          "bar": "tient.i",
-          "length": 0.6,
-          "left": 0.5,
-          "color": "pick(COLORS)"
-        },
-        {
-          "op": "bar",
-          "x": "-s * 0.62",
-          "y": "from.y + 0.55",
-          "mat": "wood"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.6",
-          "r": 0.5
-        },
-        {
-          "op": "button",
-          "x": "s * 0.6",
-          "y": "from.y + 0.9"
-        }
-      ]
-    },
-    {
-      "name": "fils à linge",
-      "effort": 2,
-      "from": 3,
-      "weight": 2,
-      "rise": [
-        1.25,
-        1.4
-      ],
-      "side": "same",
-      "nodes": 150,
-      "tip": "Fil à linge : accroche-toi n'importe où. Il plie sous ton poids, d'autant plus qu'il est lâche.",
-      "steps": [
-        {
-          "op": "line",
-          "x0": -0.83,
-          "y0": "from.y + 0.62",
-          "x1": 0.83,
-          "y1": "from.y + 0.62",
-          "slack": "0.05 + twist.slack + 0.08 * rnd()"
-        },
-        {
-          "op": "line",
-          "x0": "-s * 0.83",
-          "y0": "to.y - 0.1",
-          "x1": "s * 0.15",
-          "y1": "to.y - 0.25",
-          "slack": "0.03 + twist.slack + 0.06 * rnd()",
-          "color": "#9fc7e8"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.5",
-          "r": 0.5
-        },
-        {
-          "op": "button",
-          "x": "-s * 0.5",
-          "y": "from.y + 0.95"
-        }
-      ]
-    },
-    {
-      "name": "écheveau",
-      "effort": 2,
-      "from": 6,
-      "weight": 1.5,
-      "rise": [
-        1.1,
-        1.35
-      ],
-      "side": "cross",
-      "nodes": 220,
-      "tip": "Écheveau : agrippe les brins de laine. Ensemble, emmêlés, ils te portent.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "s * 0.6",
-          "y": "from.y + 0.4"
-        },
-        {
-          "op": "skein",
-          "x": "s * 0.05 + jitter(0.1)",
-          "top": "to.y - 0.1",
-          "length": 0.55,
-          "count": 4,
-          "color": "pick(COLORS)"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.8",
-          "r": 0.5
-        },
-        {
-          "op": "button",
-          "x": "-s * 0.35",
-          "y": "from.y + 0.8"
-        }
-      ]
-    },
-    {
-      "name": "corde lisse",
-      "effort": 3,
-      "from": 9,
-      "weight": 1.2,
-      "rise": [
-        1.2,
-        1.7
-      ],
-      "side": "any",
-      "nodes": 80,
-      "tip": "Corde lisse : rien pour se reposer, monte une main après l'autre, vite.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "top",
-          "value": "to.y + 0.15"
-        },
-        {
-          "op": "let",
-          "name": "near",
-          "value": "clampX(to.x + (to.x >= from.x ? -0.3 : 0.3))"
-        },
-        {
-          "op": "let",
-          "name": "x",
-          "value": "abs(near - s * 0.5) < 0.12 ? clampX(to.x - (near - to.x)) : near"
-        },
-        {
-          "op": "bar",
-          "x": "s * 0.5",
-          "y": "from.y + 0.3"
-        },
-        {
-          "op": "hang",
-          "x": "x",
-          "top": "top",
-          "length": "top - from.y - 0.3"
-        },
-        {
-          "op": "tip",
-          "x": "x",
-          "y": "from.y + 0.9",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "x + 0.2",
-          "y": "lerp(from.y, to.y, 0.6)"
-        }
-      ]
-    },
-    {
-      "name": "pendule",
-      "effort": 3,
-      "from": 10,
-      "weight": 1.2,
-      "rise": [
-        0.7,
-        1
-      ],
-      "side": "cross",
-      "nodes": 50,
-      "tip": "Pendule : une seule corde au-dessus du vide. Accroche son bout, balance-toi, lance l'autre bout de l'autre côté.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "top",
-          "value": "to.y + 0.3"
-        },
-        {
-          "op": "bar",
-          "x": "s * 0.62",
-          "y": "from.y + 0.3"
-        },
-        {
-          "op": "hang",
-          "clear": [
-            "s * 0.62",
-            "to.x"
-          ],
-          "x": "-s * 0.05",
-          "top": "top",
-          "length": "top - from.y - 0.4"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.7",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "-s * 0.05",
-          "y": "from.y + 0.25"
-        }
-      ]
-    },
-    {
-      "name": "échelle de corde",
-      "effort": 2,
-      "from": 12,
-      "weight": 1.2,
-      "rise": [
-        1.5,
-        1.85
-      ],
-      "side": "cross",
-      "nodes": 220,
-      "tip": "Échelle de corde : elle tourne quand tu tires de côté. Grimpe droit, un barreau après l'autre.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "lx",
-          "value": "s * 0.05 - 0.11"
-        },
-        {
-          "op": "bar",
-          "x": "s * 0.5",
-          "y": "from.y + 0.3"
-        },
-        {
-          "op": "net",
-          "x0": "lx",
-          "x1": "lx + 0.22",
-          "top": "to.y - 0.15",
-          "bottom": "from.y + 0.35",
-          "cols": 2,
-          "rows": "round((to.y - from.y) / 0.3)",
-          "ladder": true,
-          "color": "#b08a58"
-        },
-        {
-          "op": "tip",
-          "x": "lx + 0.11",
-          "y": "from.y + 1",
-          "r": 0.55
-        },
-        {
-          "op": "button",
-          "x": "-s * 0.45",
-          "y": "lerp(from.y, to.y, 0.6)"
-        }
-      ]
-    },
-    {
-      "name": "forêt de lianes",
-      "effort": 2,
-      "from": 16,
-      "weight": 1,
-      "rise": [
-        0.6,
-        0.9
-      ],
-      "side": "cross",
-      "nodes": 280,
-      "tip": "Forêt de lianes : elles s'emmêlent avec toi. Maintiens Espace pour faufiler l'aiguillette devant ou derrière.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "n",
-          "value": 7
-        },
-        {
-          "op": "let",
-          "name": "top",
-          "value": "to.y + 0.3"
-        },
-        {
-          "op": "bar",
-          "x": "s * 0.62",
-          "y": "from.y + 0.4"
-        },
-        {
-          "op": "repeat",
-          "count": "n",
-          "as": "i",
-          "do": [
-            {
-              "op": "hang",
-              "clear": [
-                "s * 0.62",
-                "to.x"
-              ],
-              "x": "s * (0.42 - (0.84 * i) / (n - 1))",
-              "top": "top",
-              "length": "top - from.y - 0.45 - 0.2 * rnd()"
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.8",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": 0,
-          "y": "from.y + 0.75"
-        }
-      ]
-    },
-    {
-      "name": "filet",
-      "effort": 1,
-      "from": 18,
-      "weight": 1,
-      "rise": [
-        1.5,
-        1.8
-      ],
-      "side": "same",
-      "nodes": 400,
-      "tip": "Filet : accroche ses cordes ou ses nœuds. Il cède sous toi, mais tout le filet te porte.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "x0",
-          "value": "s > 0 ? -0.6 : -0.15"
-        },
-        {
-          "op": "let",
-          "name": "x1",
-          "value": "s > 0 ? 0.15 : 0.6"
-        },
-        {
-          "op": "bar",
-          "x": "s * 0.62",
-          "y": "from.y + 0.35"
-        },
-        {
-          "op": "net",
-          "x0": "x0",
-          "x1": "x1",
-          "top": "to.y - 0.2",
-          "bottom": "from.y + 0.3",
-          "cols": 4,
-          "rows": 4,
-          "tied": true
-        },
-        {
-          "op": "tip",
-          "x": "(x0 + x1) / 2",
-          "y": "from.y + 0.9",
-          "r": 0.55
-        },
-        {
-          "op": "button",
-          "x": "s * 0.55",
-          "y": "lerp(from.y, to.y, 0.6)"
-        }
-      ]
-    },
-    {
-      "name": "escalier de chrome",
-      "effort": 3,
-      "from": 26,
-      "weight": 1,
-      "rise": [
-        1.3,
-        1.7
-      ],
-      "side": "any",
-      "nodes": 80,
-      "tip": "Escalier de chrome : seuls les fils posés se prennent, et ils glissent. Ne t'attarde pas.",
-      "steps": [
-        {
-          "op": "repeat",
-          "count": 3,
-          "as": "i",
-          "do": [
-            {
-              "op": "let",
-              "name": "t",
-              "value": "[0.25, 0.55, 0.85][i]"
-            },
-            {
-              "op": "bar",
-              "as": "b",
-              "x": "clampX(lerp(from.x, to.x, t) + (i % 2 ? 0.3 : -0.3) * s)",
-              "y": "lerp(from.y, to.y, t)",
-              "mat": "chrome",
-              "r": 0.018
-            },
-            {
-              "op": "drape",
-              "bar": "b.i",
-              "length": 0.5,
-              "left": 0.5,
-              "color": "pick(COLORS)"
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "-s * 0.4",
-          "y": "lerp(from.y, to.y, 0.7)"
-        }
-      ]
-    },
-    {
-      "name": "portemanteau",
-      "effort": 2,
-      "from": 2,
-      "weight": 1.3,
-      "rise": [
-        0.9,
-        1.2
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "Portemanteau : les crochets ne se prennent pas. Passe le lacet par-dessus, laisse-le pendre, et il tient tout seul.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "h1",
-          "value": "clampX(lerp(from.x, to.x, 0.35) + jitter(0.06))"
-        },
-        {
-          "op": "hook",
-          "x": "h1",
-          "y": "lerp(from.y, to.y, 0.4)"
-        },
-        {
-          "op": "hook",
-          "x": "clampX(lerp(from.x, to.x, 0.7) + jitter(0.06))",
-          "y": "lerp(from.y, to.y, 0.75)"
-        },
-        {
-          "op": "bar",
-          "x": "clampX(-h1 * 0.9)",
-          "y": "lerp(from.y, to.y, 0.55)",
-          "mat": "rubber"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "h1",
-          "y": "lerp(from.y, to.y, 0.4) + 0.08"
-        }
-      ]
-    },
-    {
-      "name": "fils de couture",
-      "effort": 2,
-      "from": 3,
-      "weight": 1.4,
-      "rise": [
-        1.0,
-        1.3
-      ],
-      "side": "any",
-      "nodes": 70,
-      "tip": "Fils de couture : ils cèdent si tu y restes pendu. Prends-les sans t'attarder, un fil après l'autre.",
-      "steps": [
-        {
-          "op": "repeat",
-          "count": 3,
-          "as": "i",
-          "do": [
-            {
-              "op": "let",
-              "name": "t",
-              "value": "(i + 1) / 4"
-            },
-            {
-              "op": "hang",
-              "x": "clampX(lerp(from.x, to.x, t) + jitter(0.05))",
-              "top": "lerp(from.y, to.y, t) + 0.36",
-              "length": 0.42,
-              "fragile": "1.8 + rnd() * 0.8"
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "lerp(from.x, to.x, 0.5) + 0.1",
-          "y": "lerp(from.y, to.y, 0.5)"
-        }
-      ]
-    },
-    {
-      "name": "monte-charge",
-      "effort": 2,
-      "from": 5,
-      "weight": 1.3,
-      "rise": [
-        1.0,
-        1.3
-      ],
-      "side": "same",
-      "nodes": 0,
-      "tip": "Monte-charge : saisis la poignée, le plomb tombe et te hisse. Lâche-la à temps pour la barre d'en haut.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "px",
-          "value": "clampX(lerp(from.x, to.x, 0.5) - s * 0.28)"
-        },
-        {
-          "op": "bar",
-          "as": "p",
-          "x": "px",
-          "y": "to.y + 0.24",
-          "mat": "chrome",
-          "r": 0.03
-        },
-        {
-          "op": "let",
-          "name": "drop",
-          "value": "p.y - from.y - 0.12"
-        },
-        {
-          "op": "lift",
-          "bar": "p.i",
-          "drop": "drop",
-          "weight": 1.9,
-          "side": "s"
-        },
-        {
-          "op": "tip",
-          "x": "px",
-          "y": "from.y + 0.4",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "radiateur",
-      "effort": 2,
-      "from": 6,
-      "weight": 1.3,
-      "rise": [
-        0.8,
-        1.0
-      ],
-      "side": "same",
-      "nodes": 0,
-      "tip": "Radiateur : l'air chaud monte. Laisse-le porter le bout libre jusqu'à la prise d'en haut.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "cx",
-          "value": "clampX(lerp(from.x, to.x, 0.5) - s * 0.22)"
-        },
-        {
-          "op": "wind",
-          "x0": "cx - 0.18",
-          "x1": "cx + 0.18",
-          "y0": "from.y - 0.35",
-          "y1": "to.y + 0.12",
-          "vx": 0,
-          "vy": 1.25
-        },
-        {
-          "op": "tip",
-          "x": "cx",
-          "y": "from.y + 0.3",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "cx",
-          "y": "lerp(from.y, to.y, 0.6)"
-        }
-      ]
-    },
-    {
-      "name": "toile d'araignée",
-      "effort": 2,
-      "from": 8,
-      "weight": 1.2,
-      "rise": [
-        0.9,
-        1.2
-      ],
-      "side": "any",
-      "nodes": 200,
-      "tip": "Toile d'araignée : le lacet s'y colle, et s'y repose. Pour en partir, tire d'un coup sec, avant que l'araignée ne descende. Espace : l'aiguillette passe sans coller.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "cx",
-          "value": "clampX(lerp(from.x, to.x, 0.5))"
-        },
-        {
-          "op": "net",
-          "x0": "cx - 0.2",
-          "x1": "cx + 0.2",
-          "top": "to.y - 0.04",
-          "bottom": "from.y + 0.12",
-          "cols": 4,
-          "rows": 4,
-          "tied": true,
-          "sticky": true
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "cx",
-          "y": "lerp(from.y, to.y, 0.55)"
-        }
-      ]
-    },
-    {
-      "name": "courant d'air",
-      "effort": 2,
-      "from": 10,
-      "weight": 1.3,
-      "rise": [
-        0.9,
-        1.4
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "Courant d'air : il souffle par rafales. Tends-toi entre deux rafales, ou laisse-la te porter.",
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b"
-        },
-        {
-          "op": "wind",
-          "x0": -0.85,
-          "x1": 0.85,
-          "y0": "lerp(from.y, to.y, 0.25)",
-          "y1": "lerp(from.y, to.y, 0.8)",
-          "vx": "(rnd() < 0.5 ? -1 : 1) * 1.4",
-          "vy": 0.15,
-          "period": "3 + rnd() * 1.5",
-          "phase": "rnd() * 6.28"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "lampe qui cherche",
-      "effort": 2,
-      "from": 12,
-      "weight": 1.3,
-      "rise": [
-        1.0,
-        1.4
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "La lampe cherche : dans son faisceau, les prises fatiguent trois fois plus vite. Attends dans l'ombre d'une barre qu'elle passe.",
-      "steps": [
-        {
-          "op": "zigzag",
-          "as": "b"
-        },
-        {
-          "op": "search",
-          "x": "jitter(0.2)",
-          "y": "to.y + 0.55",
-          "arc": "0.55 + rnd() * 0.2",
-          "period": "5 + rnd() * 2",
-          "phase": "rnd() * 6.28"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        }
-      ]
-    },
-    {
-      "name": "horloge",
-      "effort": 2,
-      "from": 14,
-      "weight": 1.2,
-      "rise": [
-        0.9,
-        1.2
-      ],
-      "side": "any",
-      "nodes": 0,
-      "tip": "Horloge : son aiguille tourne. Accroche-toi à sa pointe quand elle passe en bas, elle te monte ; lâche en haut.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "cx",
-          "value": "clampX(lerp(from.x, to.x, 0.5) * 0.6)"
-        },
-        {
-          "op": "clock",
-          "x": "cx",
-          "y": "lerp(from.y, to.y, 0.5)",
-          "length": "min(0.34, (to.y - from.y) * 0.36)",
-          "period": "(rnd() < 0.5 ? -1 : 1) * (8 + rnd() * 3)",
-          "phase": "rnd() * 6.28"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5)",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "cx",
-          "y": "lerp(from.y, to.y, 0.5) + 0.2"
-        }
-      ]
-    },
-    {
-      "name": "tyrolienne",
-      "effort": 2,
-      "from": 16,
-      "weight": 1.2,
-      "rise": [
-        0.35,
-        0.55
-      ],
-      "side": "cross",
-      "nodes": 0,
-      "tip": "Tyrolienne : agrippe la bobine, elle file le long du fil. Balance-toi au bout, lâche au bon moment.",
-      "steps": [
-        {
-          "op": "zip",
-          "x0": "from.x - s * 0.08",
-          "y0": "from.y + 0.42",
-          "x1": "to.x + s * 0.06",
-          "y1": "to.y - 0.28"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "from.y + 0.3",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": 0,
-          "y": "lerp(from.y, to.y, 0.5) - 0.25"
-        }
-      ]
+     "op": "zigzag",
+     "as": "b",
+     "do": [
+      {
+       "op": "decoy",
+       "x": "b.x",
+       "y": "b.y"
+      }
+     ]
     }
-  ],
-  "obstacles": [
+   ]
+  },
+  {
+   "name": "barres mobiles",
+   "effort": 2,
+   "from": 8,
+   "weight": 1.5,
+   "rise": [
+    0.9,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Barres mobiles : elles glissent d'un côté à l'autre. Accroche-toi quand elle passe à ta portée, elle t'emmène.",
+   "steps": [
     {
-      "name": "rien",
-      "effort": 0,
-      "from": 0,
-      "weight": 3,
-      "x": 0.5,
-      "steps": []
+     "op": "zigzag",
+     "as": "b",
+     "do": [
+      {
+       "op": "let",
+       "name": "up",
+       "value": "rnd() < 0.35"
+      },
+      {
+       "op": "let",
+       "name": "room",
+       "value": "0.72 - abs(b.x)"
+      },
+      {
+       "op": "mover",
+       "bar": "b.i",
+       "dx": "up ? 0 : min(0.25, room)",
+       "dy": "up ? 0.15 : 0",
+       "period": "2.5 + 2 * rnd()",
+       "phase": "rnd() * 6.28"
+      }
+     ]
     },
     {
-      "name": "trappe",
-      "effort": 0,
-      "from": 4,
-      "weight": 2.5,
-      "x": 0,
-      "locked": true,
-      "steps": [
-        {
-          "op": "trapdoor",
-          "F": "st.y + key.floor",
-          "key": true,
-          "beyond": "key.beyond"
-        }
-      ]
-    },
-    {
-      "name": "trappe minutée",
-      "effort": 2,
-      "from": 10,
-      "weight": 1.2,
-      "x": 0.5,
-      "tip": "Trappe minutée : elle s'ouvre et se referme toute seule. Elle s'éclaire avant de s'ouvrir : sois prêt à passer.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "F",
-          "value": "st.y + 0.75"
-        },
-        {
-          "op": "bar",
-          "x": 0,
-          "y": "F - 0.4"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "F - 0.4",
-          "r": 0.6,
-          "gate": true
-        },
-        {
-          "op": "trapdoor",
-          "F": "F",
-          "period": "3 + 2 * rnd()",
-          "beyond": 0.25
-        }
-      ]
-    },
-    {
-      "name": "fente",
-      "effort": 2,
-      "from": 8,
-      "weight": 1.5,
-      "x": 0.45,
-      "tip": "Fente : un plancher et une fente étroite. Glisse un bout dedans, accroche-le au-dessus.",
-      "steps": [
-        {
-          "op": "tip",
-          "x": "-0.1 * k",
-          "y": "st.y + 0.5",
-          "r": 0.5
-        },
-        {
-          "op": "slot"
-        }
-      ]
-    },
-    {
-      "name": "fente gardée",
-      "effort": 3,
-      "from": 19,
-      "weight": 1,
-      "x": 0.45,
-      "tip": "Fente gardée : des ciseaux de part et d'autre de la fente. Vise juste, ou le lacet y laisse un bout.",
-      "steps": [
-        {
-          "op": "slot",
-          "as": "f"
-        },
-        {
-          "op": "hazard",
-          "kind": "blade",
-          "x0": "f.x - (f.w / 2 + 0.05) - 0.04",
-          "y0": "f.F + 0.02",
-          "x1": "f.x - (f.w / 2 + 0.05) + 0.04",
-          "y1": "f.F + 0.1"
-        },
-        {
-          "op": "hazard",
-          "kind": "blade",
-          "x0": "f.x + (f.w / 2 + 0.05) - 0.04",
-          "y0": "f.F + 0.02",
-          "x1": "f.x + (f.w / 2 + 0.05) + 0.04",
-          "y1": "f.F + 0.1"
-        },
-        {
-          "op": "tip",
-          "x": "f.x",
-          "y": "f.F",
-          "r": 0.5
-        }
-      ]
-    },
-    {
-      "name": "surplomb",
-      "effort": 2,
-      "from": 13,
-      "weight": 1.2,
-      "x": -0.1,
-      "tip": "Surplomb : le plancher te couvre. Contourne son bord, d'un bout puis de l'autre.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "F",
-          "value": "st.y + 0.45"
-        },
-        {
-          "op": "floor",
-          "y": "F",
-          "x": "0.6 * k",
-          "w": 0.5,
-          "mat": "auto-chrome"
-        },
-        {
-          "op": "tip",
-          "x": "0.3 * k",
-          "y": "F",
-          "r": 0.5
-        },
-        {
-          "op": "button",
-          "x": "0.6 * k",
-          "y": "F - 0.1"
-        },
-        {
-          "op": "bar",
-          "x": "0.35 * k",
-          "y": "F + 0.3"
-        },
-        {
-          "op": "exit",
-          "x": "0.35 * k",
-          "y": "F + 0.3"
-        }
-      ]
-    },
-    {
-      "name": "chicanes",
-      "effort": 1,
-      "from": 7,
-      "weight": 1.5,
-      "x": 0.4,
-      "tip": "Chicanes : chaque étagère ne laisse qu'un passage, d'un côté puis de l'autre. Pose le lacet sur une étagère pour reprendre des forces.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "gx",
-          "value": "k * 0.35"
-        },
-        {
-          "op": "let",
-          "name": "y",
-          "value": "st.y"
-        },
-        {
-          "op": "repeat",
-          "count": 3,
-          "as": "i",
-          "do": [
-            {
-              "op": "let",
-              "name": "y",
-              "value": "y + 0.45"
-            },
-            {
-              "op": "floor",
-              "y": "y",
-              "x": "gx",
-              "w": 0.32
-            },
-            {
-              "op": "if",
-              "test": "i < 2",
-              "then": [
-                {
-                  "op": "let",
-                  "name": "gx",
-                  "value": "-gx * (0.75 + 0.3 * rnd())"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "st.y + 0.6",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": "-gx",
-          "y": "y - 0.15"
-        },
-        {
-          "op": "bar",
-          "x": "clampX(gx)",
-          "y": "y + 0.35"
-        },
-        {
-          "op": "exit",
-          "x": "clampX(gx)",
-          "y": "y + 0.35"
-        }
-      ]
-    },
-    {
-      "name": "traversée",
-      "effort": 2,
-      "from": 24,
-      "weight": 1,
-      "x": 0.6,
-      "tip": "Traversée : un plafond de chrome, un fil dessous. Suis le fil jusqu'à l'ouverture de l'autre côté.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "C",
-          "value": "st.y + 0.9"
-        },
-        {
-          "op": "shelf",
-          "x0": "k > 0 ? -0.4 : -0.85",
-          "x1": "k > 0 ? 0.85 : 0.4",
-          "y": "C",
-          "mat": "chrome"
-        },
-        {
-          "op": "line",
-          "x0": "k * 0.83",
-          "y0": "st.y + 0.6",
-          "x1": "-k * 0.83",
-          "y1": "st.y + 0.6",
-          "slack": "0.06 + twist.slack"
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "st.y + 0.5",
-          "r": 0.6
-        },
-        {
-          "op": "button",
-          "x": 0,
-          "y": "st.y + 0.35"
-        },
-        {
-          "op": "bar",
-          "x": "-k * 0.62",
-          "y": "C + 0.25"
-        },
-        {
-          "op": "exit",
-          "x": "-k * 0.62",
-          "y": "C + 0.25"
-        }
-      ]
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
     }
-  ],
-  "keys": [
+   ]
+  },
+  {
+   "name": "bougies",
+   "effort": 2,
+   "from": 11,
+   "weight": 1.2,
+   "rise": [
+    0.9,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Bougies : leur flamme brûle le lacet qui s'y attarde, et il raccourcit. Passe vite, ou passe à côté.",
+   "steps": [
     {
-      "name": "poteau",
-      "effort": 1,
-      "from": 0,
-      "weight": 0,
-      "x": 0.4,
-      "floor": 0.8,
-      "tip": "Poteau doré : pose le lacet dessus et lâche tout. S'il tient en équilibre, c'est sauvegardé, et la trappe au-dessus s'ouvre.",
-      "steps": [
-        {
-          "op": "let",
-          "name": "px",
-          "value": "jitter(0.08)"
-        },
-        {
-          "op": "bar",
-          "as": "post",
-          "x": "px",
-          "y": "F - 0.35",
-          "mat": "gold",
-          "r": 0.022
-        },
-        {
-          "op": "tip",
-          "x": "px",
-          "y": "F - 0.35",
-          "r": 0.45
-        },
-        {
-          "op": "opens",
-          "post": "post.i"
-        }
-      ]
+     "op": "zigzag",
+     "as": "b",
+     "do": [
+      {
+       "op": "hazard",
+       "kind": "flame",
+       "x0": "b.x - 0.03",
+       "y0": "b.y - 0.45",
+       "x1": "b.x + 0.03",
+       "y1": "b.y - 0.33"
+      }
+     ]
     },
     {
-      "name": "œillets",
-      "effort": 2,
-      "from": 4,
-      "weight": 2,
-      "x": 0.62,
-      "floor": 0.8,
-      "tip": "Œillets : le lacet passé dans tous à la fois ouvre la trappe. Accroche un bout d'un côté, enfile l'autre.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "0.4 * k",
-          "y": "F - 0.3"
-        },
-        {
-          "op": "bar",
-          "x": "-0.4 * k",
-          "y": "F - 0.3"
-        },
-        {
-          "op": "ring",
-          "as": "a",
-          "x": -0.3,
-          "y": "F - 0.67",
-          "r": 0.075,
-          "turn": 0.9
-        },
-        {
-          "op": "ring",
-          "as": "b",
-          "x": 0,
-          "y": "F - 0.67",
-          "r": 0.075,
-          "turn": 0.9
-        },
-        {
-          "op": "ring",
-          "as": "c",
-          "x": 0.3,
-          "y": "F - 0.67",
-          "r": 0.075,
-          "turn": 0.9
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "F - 0.67",
-          "r": 0.75,
-          "gate": true
-        },
-        {
-          "op": "button",
-          "x": "-0.7 * k",
-          "y": "F - 0.57"
-        },
-        {
-          "op": "opens",
-          "rings": [
-            "a.i",
-            "b.i",
-            "c.i"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "œillets croisés",
-      "effort": 2,
-      "from": 11,
-      "weight": 1.5,
-      "x": 0.62,
-      "floor": 0.8,
-      "tip": "Œillets croisés : un de côté, un à plat. Le lacet dans les deux à la fois ouvre la trappe.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "0.4 * k",
-          "y": "F - 0.3"
-        },
-        {
-          "op": "bar",
-          "x": "-0.4 * k",
-          "y": "F - 0.3"
-        },
-        {
-          "op": "ring",
-          "as": "a",
-          "x": "0.3 * k",
-          "y": "F - 0.72",
-          "r": 0.075,
-          "turn": 0.9
-        },
-        {
-          "op": "ring",
-          "as": "b",
-          "x": "-0.22 * k",
-          "y": "F - 0.47",
-          "r": 0.075,
-          "up": true
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "F - 0.6",
-          "r": 0.7,
-          "gate": true
-        },
-        {
-          "op": "opens",
-          "rings": [
-            "a.i",
-            "b.i"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "tirette",
-      "effort": 1,
-      "from": 5,
-      "weight": 1.5,
-      "x": 0.6,
-      "floor": 0.85,
-      "beyond": 0.35,
-      "tip": "Tirette : accroche-toi et laisse ton poids tirer. La trappe s'ouvre.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "-k * 0.6",
-          "y": "F - 0.5"
-        },
-        {
-          "op": "bar",
-          "x": 0,
-          "y": "F - 0.42"
-        },
-        {
-          "op": "pull",
-          "as": "p",
-          "x": "-k * 0.35",
-          "top": "F - 0.05",
-          "length": 0.55
-        },
-        {
-          "op": "tip",
-          "x": "-k * 0.35",
-          "y": "F - 0.4",
-          "r": 0.45,
-          "gate": true
-        },
-        {
-          "op": "button",
-          "x": "k * 0.6",
-          "y": "F - 0.4"
-        },
-        {
-          "op": "opens",
-          "pulls": [
-            "p.i"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "porte à ressort",
-      "effort": 3,
-      "from": 14,
-      "weight": 1.2,
-      "x": 0.6,
-      "floor": 0.75,
-      "beyond": 0.22,
-      "tip": "Porte à ressort : elle ne s'ouvre que tant que tu pèses sur la tirette. Pends un bout à la tirette, passe l'autre par la trappe.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "-k * 0.55",
-          "y": "F - 0.45"
-        },
-        {
-          "op": "pull",
-          "as": "p",
-          "x": "-k * 0.25",
-          "top": "F - 0.05",
-          "length": 0.4
-        },
-        {
-          "op": "tip",
-          "x": "-k * 0.25",
-          "y": "F - 0.35",
-          "r": 0.5,
-          "gate": true
-        },
-        {
-          "op": "button",
-          "x": "k * 0.55",
-          "y": "F - 0.35"
-        },
-        {
-          "op": "opens",
-          "pulls": [
-            "p.i"
-          ],
-          "held": true
-        }
-      ]
-    },
-    {
-      "name": "colonne d'œillets",
-      "effort": 3,
-      "from": 20,
-      "weight": 1,
-      "x": 0.5,
-      "floor": 0.9,
-      "tip": "Colonne d'œillets : enfile le lacet de bas en haut dans les trois à la fois.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "-k * 0.5",
-          "y": "F - 0.55"
-        },
-        {
-          "op": "bar",
-          "x": "k * 0.5",
-          "y": "F - 0.25"
-        },
-        {
-          "op": "ring",
-          "as": "a",
-          "x": 0,
-          "y": "F - 0.85",
-          "r": 0.075,
-          "up": true
-        },
-        {
-          "op": "ring",
-          "as": "b",
-          "x": 0,
-          "y": "F - 0.6",
-          "r": 0.075,
-          "up": true
-        },
-        {
-          "op": "ring",
-          "as": "c",
-          "x": 0,
-          "y": "F - 0.35",
-          "r": 0.075,
-          "up": true
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "F - 0.6",
-          "r": 0.6,
-          "gate": true
-        },
-        {
-          "op": "button",
-          "x": "-k * 0.6",
-          "y": "F - 0.2"
-        },
-        {
-          "op": "opens",
-          "rings": [
-            "a.i",
-            "b.i",
-            "c.i"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "deux tirettes",
-      "effort": 2,
-      "from": 22,
-      "weight": 1,
-      "x": 0.6,
-      "floor": 0.85,
-      "beyond": 0.35,
-      "tip": "Deux tirettes : la trappe ne s'ouvre que si tu pèses sur les deux à la fois, un bout à chacune.",
-      "steps": [
-        {
-          "op": "bar",
-          "x": "-k * 0.6",
-          "y": "F - 0.85"
-        },
-        {
-          "op": "bar",
-          "x": 0,
-          "y": "F - 0.5"
-        },
-        {
-          "op": "pull",
-          "as": "p",
-          "x": -0.4,
-          "top": "F - 0.05",
-          "length": 0.5
-        },
-        {
-          "op": "pull",
-          "as": "q",
-          "x": 0.4,
-          "top": "F - 0.05",
-          "length": 0.5
-        },
-        {
-          "op": "tip",
-          "x": 0,
-          "y": "F - 0.4",
-          "r": 0.6,
-          "gate": true
-        },
-        {
-          "op": "button",
-          "x": 0,
-          "y": "F - 0.25"
-        },
-        {
-          "op": "opens",
-          "pulls": [
-            "p.i",
-            "q.i"
-          ]
-        }
-      ]
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
     }
-  ]
+   ]
+  },
+  {
+   "name": "cascade",
+   "effort": 2,
+   "from": 13,
+   "weight": 1.2,
+   "rise": [
+    0.9,
+    1.4
+   ],
+   "side": "cross",
+   "nodes": 0,
+   "tip": "Cascade : l'eau trempe le lacet, il rétrécit et s'alourdit le temps de sécher. Traverse-la d'un coup, ou attends d'être sec pour forcer.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b"
+    },
+    {
+     "op": "let",
+     "name": "x",
+     "value": "jitter(0.1)"
+    },
+    {
+     "op": "hazard",
+     "kind": "water",
+     "x0": "x - 0.1",
+     "y0": "from.y",
+     "x1": "x + 0.1",
+     "y1": "to.y + 0.6"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    }
+   ]
+  },
+  {
+   "name": "ciseaux",
+   "effort": 3,
+   "from": 17,
+   "weight": 1,
+   "rise": [
+    0.9,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Ciseaux : ils coupent le lacet qui les touche, et il lâche tout. Garde-le loin des lames : un poteau le rend entier.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b",
+     "do": [
+      {
+       "op": "if",
+       "test": "i % 2 == 0",
+       "then": [
+        {
+         "op": "let",
+         "name": "x",
+         "value": "b.x + jitter(0.08)"
+        },
+        {
+         "op": "hazard",
+         "kind": "blade",
+         "x0": "x - 0.06",
+         "y0": "b.y - 0.5",
+         "x1": "x + 0.06",
+         "y1": "b.y - 0.4"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    }
+   ]
+  },
+  {
+   "name": "rideau de cordes",
+   "effort": 2,
+   "from": 1,
+   "weight": 2,
+   "rise": [
+    1,
+    1.3
+   ],
+   "side": "cross",
+   "nodes": 130,
+   "tip": "Cordes : approche un bout et maintiens son clic, tu t'y suspends et tu te balances jusqu'à la suivante.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "n",
+     "value": "4 + floor(rnd() * 2)"
+    },
+    {
+     "op": "let",
+     "name": "top",
+     "value": "to.y + 0.05"
+    },
+    {
+     "op": "bar",
+     "x": "s * 0.55",
+     "y": "from.y + 0.35"
+    },
+    {
+     "op": "repeat",
+     "count": "n",
+     "as": "i",
+     "do": [
+      {
+       "op": "hang",
+       "clear": [
+        "s * 0.55",
+        "to.x"
+       ],
+       "x": "s * (0.45 - (0.95 * i) / (n - 1))",
+       "top": "top",
+       "length": "top - from.y - 0.5 - 0.12 * rnd()"
+      }
+     ]
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.8",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "from.y + 0.55"
+    }
+   ]
+  },
+  {
+   "name": "fils posés",
+   "effort": 2,
+   "from": 2,
+   "weight": 2,
+   "rise": [
+    1.2,
+    1.35
+   ],
+   "side": "cross",
+   "nodes": 60,
+   "tip": "Fil posé sur du chrome : il glisse sous ton poids. Sur du caoutchouc, le frottement le retient.",
+   "steps": [
+    {
+     "op": "bar",
+     "as": "glisse",
+     "x": "s * 0.35 + jitter(0.08)",
+     "y": "from.y + 0.45",
+     "mat": "chrome",
+     "r": 0.018
+    },
+    {
+     "op": "drape",
+     "bar": "glisse.i",
+     "length": 0.6,
+     "left": 0.5,
+     "color": "pick(COLORS)"
+    },
+    {
+     "op": "bar",
+     "as": "tient",
+     "x": "-s * 0.4 + jitter(0.08)",
+     "y": "from.y + 0.9",
+     "mat": "rubber"
+    },
+    {
+     "op": "drape",
+     "bar": "tient.i",
+     "length": 0.6,
+     "left": 0.5,
+     "color": "pick(COLORS)"
+    },
+    {
+     "op": "bar",
+     "x": "-s * 0.62",
+     "y": "from.y + 0.55",
+     "mat": "wood"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.6",
+     "r": 0.5
+    },
+    {
+     "op": "button",
+     "x": "s * 0.6",
+     "y": "from.y + 0.9"
+    }
+   ]
+  },
+  {
+   "name": "fils à linge",
+   "effort": 2,
+   "from": 3,
+   "weight": 2,
+   "rise": [
+    1.25,
+    1.4
+   ],
+   "side": "same",
+   "nodes": 150,
+   "tip": "Fil à linge : accroche-toi n'importe où. Il plie sous ton poids, d'autant plus qu'il est lâche.",
+   "steps": [
+    {
+     "op": "line",
+     "x0": -0.83,
+     "y0": "from.y + 0.62",
+     "x1": 0.83,
+     "y1": "from.y + 0.62",
+     "slack": "0.05 + twist.slack + 0.08 * rnd()"
+    },
+    {
+     "op": "line",
+     "x0": "-s * 0.83",
+     "y0": "to.y - 0.1",
+     "x1": "s * 0.15",
+     "y1": "to.y - 0.25",
+     "slack": "0.03 + twist.slack + 0.06 * rnd()",
+     "color": "#9fc7e8"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.5",
+     "r": 0.5
+    },
+    {
+     "op": "button",
+     "x": "-s * 0.5",
+     "y": "from.y + 0.95"
+    }
+   ]
+  },
+  {
+   "name": "écheveau",
+   "effort": 2,
+   "from": 6,
+   "weight": 1.5,
+   "rise": [
+    1.1,
+    1.35
+   ],
+   "side": "cross",
+   "nodes": 220,
+   "tip": "Écheveau : agrippe les brins de laine. Ensemble, emmêlés, ils te portent.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "s * 0.6",
+     "y": "from.y + 0.4"
+    },
+    {
+     "op": "skein",
+     "x": "s * 0.05 + jitter(0.1)",
+     "top": "to.y - 0.1",
+     "length": 0.55,
+     "count": 4,
+     "color": "pick(COLORS)"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.8",
+     "r": 0.5
+    },
+    {
+     "op": "button",
+     "x": "-s * 0.35",
+     "y": "from.y + 0.8"
+    }
+   ]
+  },
+  {
+   "name": "corde lisse",
+   "effort": 3,
+   "from": 9,
+   "weight": 1.2,
+   "rise": [
+    1.2,
+    1.7
+   ],
+   "side": "any",
+   "nodes": 80,
+   "tip": "Corde lisse : rien pour se reposer, monte une main après l'autre, vite.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "top",
+     "value": "to.y + 0.15"
+    },
+    {
+     "op": "let",
+     "name": "near",
+     "value": "clampX(to.x + (to.x >= from.x ? -0.3 : 0.3))"
+    },
+    {
+     "op": "let",
+     "name": "x",
+     "value": "abs(near - s * 0.5) < 0.12 ? clampX(to.x - (near - to.x)) : near"
+    },
+    {
+     "op": "bar",
+     "x": "s * 0.5",
+     "y": "from.y + 0.3"
+    },
+    {
+     "op": "hang",
+     "x": "x",
+     "top": "top",
+     "length": "top - from.y - 0.3"
+    },
+    {
+     "op": "tip",
+     "x": "x",
+     "y": "from.y + 0.9",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "x + 0.2",
+     "y": "lerp(from.y, to.y, 0.6)"
+    }
+   ]
+  },
+  {
+   "name": "pendule",
+   "effort": 3,
+   "from": 10,
+   "weight": 1.2,
+   "rise": [
+    0.7,
+    1
+   ],
+   "side": "cross",
+   "nodes": 50,
+   "tip": "Pendule : une seule corde au-dessus du vide. Accroche son bout, balance-toi, lance l'autre bout de l'autre côté.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "top",
+     "value": "to.y + 0.3"
+    },
+    {
+     "op": "bar",
+     "x": "s * 0.62",
+     "y": "from.y + 0.3"
+    },
+    {
+     "op": "hang",
+     "clear": [
+      "s * 0.62",
+      "to.x"
+     ],
+     "x": "-s * 0.05",
+     "top": "top",
+     "length": "top - from.y - 0.4"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.7",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "-s * 0.05",
+     "y": "from.y + 0.25"
+    }
+   ]
+  },
+  {
+   "name": "échelle de corde",
+   "effort": 2,
+   "from": 12,
+   "weight": 1.2,
+   "rise": [
+    1.5,
+    1.85
+   ],
+   "side": "cross",
+   "nodes": 220,
+   "tip": "Échelle de corde : elle tourne quand tu tires de côté. Grimpe droit, un barreau après l'autre.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "lx",
+     "value": "s * 0.05 - 0.11"
+    },
+    {
+     "op": "bar",
+     "x": "s * 0.5",
+     "y": "from.y + 0.3"
+    },
+    {
+     "op": "net",
+     "x0": "lx",
+     "x1": "lx + 0.22",
+     "top": "to.y - 0.15",
+     "bottom": "from.y + 0.35",
+     "cols": 2,
+     "rows": "round((to.y - from.y) / 0.3)",
+     "ladder": true,
+     "color": "#b08a58"
+    },
+    {
+     "op": "tip",
+     "x": "lx + 0.11",
+     "y": "from.y + 1",
+     "r": 0.55
+    },
+    {
+     "op": "button",
+     "x": "-s * 0.45",
+     "y": "lerp(from.y, to.y, 0.6)"
+    }
+   ]
+  },
+  {
+   "name": "forêt de lianes",
+   "effort": 2,
+   "from": 16,
+   "weight": 1,
+   "rise": [
+    0.6,
+    0.9
+   ],
+   "side": "cross",
+   "nodes": 280,
+   "tip": "Forêt de lianes : elles s'emmêlent avec toi. Maintiens Espace pour faufiler l'aiguillette devant ou derrière.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "n",
+     "value": 7
+    },
+    {
+     "op": "let",
+     "name": "top",
+     "value": "to.y + 0.3"
+    },
+    {
+     "op": "bar",
+     "x": "s * 0.62",
+     "y": "from.y + 0.4"
+    },
+    {
+     "op": "repeat",
+     "count": "n",
+     "as": "i",
+     "do": [
+      {
+       "op": "hang",
+       "clear": [
+        "s * 0.62",
+        "to.x"
+       ],
+       "x": "s * (0.42 - (0.84 * i) / (n - 1))",
+       "top": "top",
+       "length": "top - from.y - 0.45 - 0.2 * rnd()"
+      }
+     ]
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.8",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "from.y + 0.75"
+    }
+   ]
+  },
+  {
+   "name": "filet",
+   "effort": 1,
+   "from": 18,
+   "weight": 1,
+   "rise": [
+    1.5,
+    1.8
+   ],
+   "side": "same",
+   "nodes": 400,
+   "tip": "Filet : accroche ses cordes ou ses nœuds. Il cède sous toi, mais tout le filet te porte.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "x0",
+     "value": "s > 0 ? -0.6 : -0.15"
+    },
+    {
+     "op": "let",
+     "name": "x1",
+     "value": "s > 0 ? 0.15 : 0.6"
+    },
+    {
+     "op": "bar",
+     "x": "s * 0.62",
+     "y": "from.y + 0.35"
+    },
+    {
+     "op": "net",
+     "x0": "x0",
+     "x1": "x1",
+     "top": "to.y - 0.2",
+     "bottom": "from.y + 0.3",
+     "cols": 4,
+     "rows": 4,
+     "tied": true
+    },
+    {
+     "op": "tip",
+     "x": "(x0 + x1) / 2",
+     "y": "from.y + 0.9",
+     "r": 0.55
+    },
+    {
+     "op": "button",
+     "x": "s * 0.55",
+     "y": "lerp(from.y, to.y, 0.6)"
+    }
+   ]
+  },
+  {
+   "name": "escalier de chrome",
+   "effort": 3,
+   "from": 26,
+   "weight": 1,
+   "rise": [
+    1.3,
+    1.7
+   ],
+   "side": "any",
+   "nodes": 80,
+   "tip": "Escalier de chrome : seuls les fils posés se prennent, et ils glissent. Ne t'attarde pas.",
+   "steps": [
+    {
+     "op": "repeat",
+     "count": 3,
+     "as": "i",
+     "do": [
+      {
+       "op": "let",
+       "name": "t",
+       "value": "[0.25, 0.55, 0.85][i]"
+      },
+      {
+       "op": "bar",
+       "as": "b",
+       "x": "clampX(lerp(from.x, to.x, t) + (i % 2 ? 0.3 : -0.3) * s)",
+       "y": "lerp(from.y, to.y, t)",
+       "mat": "chrome",
+       "r": 0.018
+      },
+      {
+       "op": "drape",
+       "bar": "b.i",
+       "length": 0.5,
+       "left": 0.5,
+       "color": "pick(COLORS)"
+      }
+     ]
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "-s * 0.4",
+     "y": "lerp(from.y, to.y, 0.7)"
+    }
+   ]
+  },
+  {
+   "name": "portemanteau",
+   "effort": 2,
+   "from": 2,
+   "weight": 1.3,
+   "rise": [
+    0.9,
+    1.2
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Portemanteau : les crochets ne se prennent pas. Passe le lacet par-dessus, laisse-le pendre, et il tient tout seul.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "h1",
+     "value": "clampX(lerp(from.x, to.x, 0.35) + jitter(0.06))"
+    },
+    {
+     "op": "hook",
+     "x": "h1",
+     "y": "lerp(from.y, to.y, 0.4)"
+    },
+    {
+     "op": "hook",
+     "x": "clampX(lerp(from.x, to.x, 0.7) + jitter(0.06))",
+     "y": "lerp(from.y, to.y, 0.75)"
+    },
+    {
+     "op": "bar",
+     "x": "clampX(-h1 * 0.9)",
+     "y": "lerp(from.y, to.y, 0.55)",
+     "mat": "rubber"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "h1",
+     "y": "lerp(from.y, to.y, 0.4) + 0.08"
+    }
+   ]
+  },
+  {
+   "name": "fils de couture",
+   "effort": 2,
+   "from": 3,
+   "weight": 1.4,
+   "rise": [
+    1.0,
+    1.3
+   ],
+   "side": "any",
+   "nodes": 70,
+   "tip": "Fils de couture : ils cèdent si tu y restes pendu. Prends-les sans t'attarder, un fil après l'autre.",
+   "steps": [
+    {
+     "op": "repeat",
+     "count": 3,
+     "as": "i",
+     "do": [
+      {
+       "op": "let",
+       "name": "t",
+       "value": "(i + 1) / 4"
+      },
+      {
+       "op": "hang",
+       "x": "clampX(lerp(from.x, to.x, t) + jitter(0.05))",
+       "top": "lerp(from.y, to.y, t) + 0.36",
+       "length": 0.42,
+       "fragile": "1.8 + rnd() * 0.8"
+      }
+     ]
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "lerp(from.x, to.x, 0.5) + 0.1",
+     "y": "lerp(from.y, to.y, 0.5)"
+    }
+   ]
+  },
+  {
+   "name": "monte-charge",
+   "effort": 2,
+   "from": 5,
+   "weight": 1.3,
+   "rise": [
+    1.0,
+    1.3
+   ],
+   "side": "same",
+   "nodes": 0,
+   "tip": "Monte-charge : saisis la poignée, le plomb tombe et te hisse. Lâche-la à temps pour la barre d'en haut.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "px",
+     "value": "clampX(lerp(from.x, to.x, 0.5) - s * 0.28)"
+    },
+    {
+     "op": "bar",
+     "as": "p",
+     "x": "px",
+     "y": "to.y + 0.24",
+     "mat": "chrome",
+     "r": 0.03
+    },
+    {
+     "op": "let",
+     "name": "drop",
+     "value": "p.y - from.y - 0.12"
+    },
+    {
+     "op": "lift",
+     "bar": "p.i",
+     "drop": "drop",
+     "weight": 1.9,
+     "side": "s"
+    },
+    {
+     "op": "tip",
+     "x": "px",
+     "y": "from.y + 0.4",
+     "r": 0.6
+    }
+   ]
+  },
+  {
+   "name": "radiateur",
+   "effort": 2,
+   "from": 6,
+   "weight": 1.3,
+   "rise": [
+    0.8,
+    1.0
+   ],
+   "side": "same",
+   "nodes": 0,
+   "tip": "Radiateur : l'air chaud monte. Laisse-le porter le bout libre jusqu'à la prise d'en haut.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) - s * 0.22)"
+    },
+    {
+     "op": "wind",
+     "x0": "cx - 0.18",
+     "x1": "cx + 0.18",
+     "y0": "from.y - 0.35",
+     "y1": "to.y + 0.12",
+     "vx": 0,
+     "vy": 1.25
+    },
+    {
+     "op": "tip",
+     "x": "cx",
+     "y": "from.y + 0.3",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "lerp(from.y, to.y, 0.6)"
+    }
+   ]
+  },
+  {
+   "name": "toile d'araignée",
+   "effort": 2,
+   "from": 8,
+   "weight": 1.2,
+   "rise": [
+    0.9,
+    1.2
+   ],
+   "side": "any",
+   "nodes": 200,
+   "tip": "Toile d'araignée : le lacet s'y colle, et s'y repose. Pour en partir, tire d'un coup sec, avant que l'araignée ne descende. Espace : l'aiguillette passe sans coller.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5))"
+    },
+    {
+     "op": "net",
+     "x0": "cx - 0.2",
+     "x1": "cx + 0.2",
+     "top": "to.y - 0.04",
+     "bottom": "from.y + 0.12",
+     "cols": 4,
+     "rows": 4,
+     "tied": true,
+     "sticky": true
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "lerp(from.y, to.y, 0.55)"
+    }
+   ]
+  },
+  {
+   "name": "courant d'air",
+   "effort": 2,
+   "from": 10,
+   "weight": 1.3,
+   "rise": [
+    0.9,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Courant d'air : il souffle par rafales. Tends-toi entre deux rafales, ou laisse-la te porter.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b"
+    },
+    {
+     "op": "wind",
+     "x0": -0.85,
+     "x1": 0.85,
+     "y0": "lerp(from.y, to.y, 0.25)",
+     "y1": "lerp(from.y, to.y, 0.8)",
+     "vx": "(rnd() < 0.5 ? -1 : 1) * 1.4",
+     "vy": 0.15,
+     "period": "3 + rnd() * 1.5",
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    }
+   ]
+  },
+  {
+   "name": "lampe qui cherche",
+   "effort": 2,
+   "from": 12,
+   "weight": 1.3,
+   "rise": [
+    1.0,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "La lampe cherche : dans son faisceau, les prises fatiguent trois fois plus vite. Attends dans l'ombre d'une barre qu'elle passe.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b"
+    },
+    {
+     "op": "search",
+     "x": "jitter(0.2)",
+     "y": "to.y + 0.55",
+     "arc": "0.55 + rnd() * 0.2",
+     "period": "5 + rnd() * 2",
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    }
+   ]
+  },
+  {
+   "name": "horloge",
+   "effort": 2,
+   "from": 14,
+   "weight": 1.2,
+   "rise": [
+    0.9,
+    1.2
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Horloge : son aiguille tourne. Accroche-toi à sa pointe quand elle passe en bas, elle te monte ; lâche en haut.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) * 0.6)"
+    },
+    {
+     "op": "clock",
+     "x": "cx",
+     "y": "lerp(from.y, to.y, 0.5)",
+     "length": "min(0.34, (to.y - from.y) * 0.36)",
+     "period": "(rnd() < 0.5 ? -1 : 1) * (8 + rnd() * 3)",
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "lerp(from.y, to.y, 0.5) + 0.2"
+    }
+   ]
+  },
+  {
+   "name": "tyrolienne",
+   "effort": 2,
+   "from": 16,
+   "weight": 1.2,
+   "rise": [
+    0.35,
+    0.55
+   ],
+   "side": "cross",
+   "nodes": 0,
+   "tip": "Tyrolienne : agrippe la bobine, elle file le long du fil. Balance-toi au bout, lâche au bon moment.",
+   "steps": [
+    {
+     "op": "zip",
+     "x0": "from.x - s * 0.08",
+     "y0": "from.y + 0.42",
+     "x1": "to.x + s * 0.06",
+     "y1": "to.y - 0.28"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.3",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5) - 0.25"
+    }
+   ]
+  },
+  {
+   "name": "le manège",
+   "bravura": "L'entrée",
+   "effort": 2,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.05,
+    1.3
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Le manège : la roue tourne et emporte ce qui s'y tient. Accroche-toi en bas, laisse-toi monter, passe d'une barre à l'autre et lâche en haut.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) * 0.4)"
+    },
+    {
+     "op": "let",
+     "name": "cy",
+     "value": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "let",
+     "name": "R",
+     "value": "min(0.42, (to.y - from.y) * 0.42)"
+    },
+    {
+     "op": "repeat",
+     "count": 6,
+     "as": "j",
+     "do": [
+      {
+       "op": "bar",
+       "as": "b",
+       "x": "cx + R * Math.sin(j * 2 * PI / 6)",
+       "y": "cy + R * Math.cos(j * 2 * PI / 6)",
+       "mat": "wood"
+      },
+      {
+       "op": "mover",
+       "bar": "b.i",
+       "dx": "R",
+       "dy": "R",
+       "period": "14",
+       "phase": "j * 2 * PI / 6",
+       "orbit": true
+      }
+     ]
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "cy"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "cy",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "les monte-charges",
+   "bravura": "La penderie",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.4,
+    1.7
+   ],
+   "side": "same",
+   "nodes": 0,
+   "tip": "Deux monte-charges : le premier te hisse jusqu'au second. Lâche au bon moment, saisis l'autre poignée.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "mid",
+     "value": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "let",
+     "name": "ax",
+     "value": "clampX(from.x * 0.6)"
+    },
+    {
+     "op": "bar",
+     "as": "p",
+     "x": "ax",
+     "y": "mid + 0.1",
+     "mat": "chrome",
+     "r": 0.03
+    },
+    {
+     "op": "lift",
+     "bar": "p.i",
+     "drop": "p.y - from.y - 0.12",
+     "weight": 1.9,
+     "side": "-s"
+    },
+    {
+     "op": "let",
+     "name": "bx",
+     "value": "clampX(-ax * 0.9)"
+    },
+    {
+     "op": "bar",
+     "x": "lerp(ax, bx, 0.5)",
+     "y": "mid - 0.02"
+    },
+    {
+     "op": "bar",
+     "as": "q",
+     "x": "bx",
+     "y": "to.y + 0.24",
+     "mat": "chrome",
+     "r": 0.03
+    },
+    {
+     "op": "lift",
+     "bar": "q.i",
+     "drop": "q.y - mid + 0.05",
+     "weight": 1.9,
+     "side": "s"
+    },
+    {
+     "op": "button",
+     "x": "lerp(ax, bx, 0.5)",
+     "y": "mid + 0.25"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "from.y + 0.4",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "le mobile",
+   "bravura": "La chambre des petits",
+   "effort": 2,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.1,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Le mobile : ses barres tournent chacune à son rythme. Lis leurs ronds, et saute de l'une à l'autre quand elles se croisent.",
+   "steps": [
+    {
+     "op": "repeat",
+     "count": 3,
+     "as": "j",
+     "do": [
+      {
+       "op": "let",
+       "name": "t",
+       "value": "(j + 1) / 4"
+      },
+      {
+       "op": "let",
+       "name": "cx",
+       "value": "clampX(lerp(from.x, to.x, t) * 0.6 + (j % 2 ? 0.15 : -0.15))"
+      },
+      {
+       "op": "bar",
+       "as": "b",
+       "x": "cx",
+       "y": "lerp(from.y, to.y, t) + 0.12"
+      },
+      {
+       "op": "mover",
+       "bar": "b.i",
+       "dx": "0.17 + 0.05 * j",
+       "dy": 0.12,
+       "period": "5 + 1.3 * j",
+       "phase": "rnd() * 6.28",
+       "orbit": true
+      }
+     ]
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "l'aiguille",
+   "bravura": "L'atelier",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.0,
+    1.3
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "L'aiguille : elle va et vient en travers de la voie, et coupe ce qu'elle touche. Passe derrière elle, jamais dessous.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b"
+    },
+    {
+     "op": "let",
+     "name": "ny",
+     "value": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "hazard",
+     "kind": "blade",
+     "x0": -0.015,
+     "y0": "ny - 0.16",
+     "x1": 0.015,
+     "y1": "ny + 0.16",
+     "dx": 0.55,
+     "dy": 0,
+     "period": 3.4,
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "button",
+     "x": "jitter(0.3)",
+     "y": "ny + 0.24"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "ny",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "le tambour",
+   "bravura": "La buanderie",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.05,
+    1.3
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Le tambour : il tourne vite, et au milieu l'eau trempe le lacet (plus lourd, il fatigue plus vite). Tiens-toi à ses barres de caoutchouc, sans tomber dedans.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) * 0.4)"
+    },
+    {
+     "op": "let",
+     "name": "cy",
+     "value": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "let",
+     "name": "R",
+     "value": "min(0.42, (to.y - from.y) * 0.42)"
+    },
+    {
+     "op": "repeat",
+     "count": 5,
+     "as": "j",
+     "do": [
+      {
+       "op": "bar",
+       "as": "b",
+       "x": "cx + R * Math.sin(j * 2 * PI / 5)",
+       "y": "cy + R * Math.cos(j * 2 * PI / 5)",
+       "mat": "rubber"
+      },
+      {
+       "op": "mover",
+       "bar": "b.i",
+       "dx": "R",
+       "dy": "R",
+       "period": "9",
+       "phase": "j * 2 * PI / 5",
+       "orbit": true
+      }
+     ]
+    },
+    {
+     "op": "hazard",
+     "kind": "water",
+     "x0": "cx - 0.09",
+     "y0": "cy - 0.09",
+     "x1": "cx + 0.09",
+     "y1": "cy + 0.09"
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "cy + 0.14"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "cy",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "le ventilateur",
+   "bravura": "Le salon",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.0,
+    1.25
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Le ventilateur : ses trois pales t'emportent, et il souffle par rafales. Accroche une pale quand elle descend, lâche quand elle monte.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) * 0.5)"
+    },
+    {
+     "op": "let",
+     "name": "cy",
+     "value": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "clock",
+     "x": "cx",
+     "y": "cy",
+     "length": "min(0.34, (to.y - from.y) * 0.38)",
+     "period": "(rnd() < 0.5 ? -1 : 1) * 7.5",
+     "phase": "rnd() * 6.28",
+     "arms": 3
+    },
+    {
+     "op": "wind",
+     "x0": -0.85,
+     "x1": 0.85,
+     "y0": "cy - 0.3",
+     "y1": "cy + 0.4",
+     "vx": "(rnd() < 0.5 ? -1 : 1) * 1.1",
+     "vy": 0.2,
+     "period": 4,
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "cy + 0.42"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "cy",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "les projecteurs",
+   "bravura": "La chambre",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.1,
+    1.4
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Deux projecteurs se croisent. Leurs faisceaux épuisent tes prises : avance d'ombre en ombre, derrière les barres.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b",
+     "do": [
+      {
+       "op": "bar",
+       "x": "clampX(b.x * 0.4)",
+       "y": "b.y + 0.07",
+       "mat": "chrome",
+       "r": 0.02
+      }
+     ]
+    },
+    {
+     "op": "search",
+     "x": -0.55,
+     "y": "to.y + 0.5",
+     "arc": 0.6,
+     "period": 5.5,
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "search",
+     "x": 0.55,
+     "y": "to.y + 0.5",
+     "arc": 0.6,
+     "period": 6.3,
+     "phase": "rnd() * 6.28"
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.6)"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "la grande toile",
+   "bravura": "Le grenier",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.0,
+    1.25
+   ],
+   "side": "any",
+   "nodes": 330,
+   "tip": "La grande toile : tout ce qui la touche colle. Traverse-la l'aiguillette en avant (Espace), ou arrache-toi d'un coup sec avant que l'araignée ne descende.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) * 0.5)"
+    },
+    {
+     "op": "net",
+     "x0": "cx - 0.34",
+     "x1": "cx + 0.34",
+     "top": "to.y - 0.04",
+     "bottom": "from.y + 0.12",
+     "cols": 6,
+     "rows": 5,
+     "tied": true,
+     "sticky": true
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "la tempête",
+   "bravura": "Le toit",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.0,
+    1.3
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "La tempête : le vent souffle d'un côté, puis de l'autre. Le chrome glisse : tiens-toi au bois, et profite des accalmies.",
+   "steps": [
+    {
+     "op": "zigzag",
+     "as": "b",
+     "do": [
+      {
+       "op": "decoy",
+       "x": "b.x",
+       "y": "b.y"
+      }
+     ]
+    },
+    {
+     "op": "let",
+     "name": "ph",
+     "value": "rnd() * 6.28"
+    },
+    {
+     "op": "wind",
+     "x0": -0.85,
+     "x1": 0.85,
+     "y0": "from.y",
+     "y1": "to.y",
+     "vx": 1.5,
+     "vy": 0.1,
+     "period": 5,
+     "phase": "ph"
+    },
+    {
+     "op": "wind",
+     "x0": -0.85,
+     "x1": 0.85,
+     "y0": "from.y",
+     "y1": "to.y",
+     "vx": -1.5,
+     "vy": 0.1,
+     "period": 5,
+     "phase": "ph + PI"
+    },
+    {
+     "op": "button",
+     "x": "jitter(0.4)",
+     "y": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "les étoiles filantes",
+   "bravura": "La nuit",
+   "effort": 3,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.05,
+    1.35
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "Les étoiles filantes : des barres qui filent en travers du ciel. Attrape-en une au vol, laisse-la t'emmener.",
+   "steps": [
+    {
+     "op": "repeat",
+     "count": 4,
+     "as": "j",
+     "do": [
+      {
+       "op": "let",
+       "name": "t",
+       "value": "(j + 1) / 5"
+      },
+      {
+       "op": "bar",
+       "as": "b",
+       "x": "jitter(0.1)",
+       "y": "lerp(from.y, to.y, t)"
+      },
+      {
+       "op": "mover",
+       "bar": "b.i",
+       "dx": 0.5,
+       "dy": 0.08,
+       "period": "3 + rnd() * 1.5",
+       "phase": "rnd() * 6.28"
+      }
+     ]
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "lerp(from.y, to.y, 0.5)",
+     "r": 0.7
+    }
+   ]
+  },
+  {
+   "name": "la grande roue",
+   "bravura": "L'aube",
+   "effort": 2,
+   "from": 999,
+   "weight": 0,
+   "rise": [
+    1.1,
+    1.35
+   ],
+   "side": "any",
+   "nodes": 0,
+   "tip": "La grande roue : elle t'emmène vers le haut. L'autre lacet n'est plus loin.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "cx",
+     "value": "clampX(lerp(from.x, to.x, 0.5) * 0.4)"
+    },
+    {
+     "op": "let",
+     "name": "cy",
+     "value": "lerp(from.y, to.y, 0.5)"
+    },
+    {
+     "op": "let",
+     "name": "R",
+     "value": "min(0.45, (to.y - from.y) * 0.42)"
+    },
+    {
+     "op": "repeat",
+     "count": 8,
+     "as": "j",
+     "do": [
+      {
+       "op": "bar",
+       "as": "b",
+       "x": "cx + R * Math.sin(j * 2 * PI / 8)",
+       "y": "cy + R * Math.cos(j * 2 * PI / 8)",
+       "mat": "wood"
+      },
+      {
+       "op": "mover",
+       "bar": "b.i",
+       "dx": "R",
+       "dy": "R",
+       "period": "18",
+       "phase": "j * 2 * PI / 8",
+       "orbit": true
+      }
+     ]
+    },
+    {
+     "op": "button",
+     "x": "cx",
+     "y": "cy"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "cy",
+     "r": 0.7
+    }
+   ]
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "rien",
+   "effort": 0,
+   "from": 0,
+   "weight": 3,
+   "x": 0.5,
+   "steps": []
+  },
+  {
+   "name": "trappe",
+   "effort": 0,
+   "from": 4,
+   "weight": 2.5,
+   "x": 0,
+   "locked": true,
+   "steps": [
+    {
+     "op": "trapdoor",
+     "F": "st.y + key.floor",
+     "key": true,
+     "beyond": "key.beyond"
+    }
+   ]
+  },
+  {
+   "name": "trappe minutée",
+   "effort": 2,
+   "from": 10,
+   "weight": 1.2,
+   "x": 0.5,
+   "tip": "Trappe minutée : elle s'ouvre et se referme toute seule. Elle s'éclaire avant de s'ouvrir : sois prêt à passer.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "F",
+     "value": "st.y + 0.75"
+    },
+    {
+     "op": "bar",
+     "x": 0,
+     "y": "F - 0.4"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "F - 0.4",
+     "r": 0.6,
+     "gate": true
+    },
+    {
+     "op": "trapdoor",
+     "F": "F",
+     "period": "3 + 2 * rnd()",
+     "beyond": 0.25
+    }
+   ]
+  },
+  {
+   "name": "fente",
+   "effort": 2,
+   "from": 8,
+   "weight": 1.5,
+   "x": 0.45,
+   "tip": "Fente : un plancher et une fente étroite. Glisse un bout dedans, accroche-le au-dessus.",
+   "steps": [
+    {
+     "op": "tip",
+     "x": "-0.1 * k",
+     "y": "st.y + 0.5",
+     "r": 0.5
+    },
+    {
+     "op": "slot"
+    }
+   ]
+  },
+  {
+   "name": "fente gardée",
+   "effort": 3,
+   "from": 19,
+   "weight": 1,
+   "x": 0.45,
+   "tip": "Fente gardée : des ciseaux de part et d'autre de la fente. Vise juste, ou le lacet y laisse un bout.",
+   "steps": [
+    {
+     "op": "slot",
+     "as": "f"
+    },
+    {
+     "op": "hazard",
+     "kind": "blade",
+     "x0": "f.x - (f.w / 2 + 0.05) - 0.04",
+     "y0": "f.F + 0.02",
+     "x1": "f.x - (f.w / 2 + 0.05) + 0.04",
+     "y1": "f.F + 0.1"
+    },
+    {
+     "op": "hazard",
+     "kind": "blade",
+     "x0": "f.x + (f.w / 2 + 0.05) - 0.04",
+     "y0": "f.F + 0.02",
+     "x1": "f.x + (f.w / 2 + 0.05) + 0.04",
+     "y1": "f.F + 0.1"
+    },
+    {
+     "op": "tip",
+     "x": "f.x",
+     "y": "f.F",
+     "r": 0.5
+    }
+   ]
+  },
+  {
+   "name": "surplomb",
+   "effort": 2,
+   "from": 13,
+   "weight": 1.2,
+   "x": -0.1,
+   "tip": "Surplomb : le plancher te couvre. Contourne son bord, d'un bout puis de l'autre.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "F",
+     "value": "st.y + 0.45"
+    },
+    {
+     "op": "floor",
+     "y": "F",
+     "x": "0.6 * k",
+     "w": 0.5,
+     "mat": "auto-chrome"
+    },
+    {
+     "op": "tip",
+     "x": "0.3 * k",
+     "y": "F",
+     "r": 0.5
+    },
+    {
+     "op": "button",
+     "x": "0.6 * k",
+     "y": "F - 0.1"
+    },
+    {
+     "op": "bar",
+     "x": "0.35 * k",
+     "y": "F + 0.3"
+    },
+    {
+     "op": "exit",
+     "x": "0.35 * k",
+     "y": "F + 0.3"
+    }
+   ]
+  },
+  {
+   "name": "chicanes",
+   "effort": 1,
+   "from": 7,
+   "weight": 1.5,
+   "x": 0.4,
+   "tip": "Chicanes : chaque étagère ne laisse qu'un passage, d'un côté puis de l'autre. Pose le lacet sur une étagère pour reprendre des forces.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "gx",
+     "value": "k * 0.35"
+    },
+    {
+     "op": "let",
+     "name": "y",
+     "value": "st.y"
+    },
+    {
+     "op": "repeat",
+     "count": 3,
+     "as": "i",
+     "do": [
+      {
+       "op": "let",
+       "name": "y",
+       "value": "y + 0.45"
+      },
+      {
+       "op": "floor",
+       "y": "y",
+       "x": "gx",
+       "w": 0.32
+      },
+      {
+       "op": "if",
+       "test": "i < 2",
+       "then": [
+        {
+         "op": "let",
+         "name": "gx",
+         "value": "-gx * (0.75 + 0.3 * rnd())"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "st.y + 0.6",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": "-gx",
+     "y": "y - 0.15"
+    },
+    {
+     "op": "bar",
+     "x": "clampX(gx)",
+     "y": "y + 0.35"
+    },
+    {
+     "op": "exit",
+     "x": "clampX(gx)",
+     "y": "y + 0.35"
+    }
+   ]
+  },
+  {
+   "name": "traversée",
+   "effort": 2,
+   "from": 24,
+   "weight": 1,
+   "x": 0.6,
+   "tip": "Traversée : un plafond de chrome, un fil dessous. Suis le fil jusqu'à l'ouverture de l'autre côté.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "C",
+     "value": "st.y + 0.9"
+    },
+    {
+     "op": "shelf",
+     "x0": "k > 0 ? -0.4 : -0.85",
+     "x1": "k > 0 ? 0.85 : 0.4",
+     "y": "C",
+     "mat": "chrome"
+    },
+    {
+     "op": "line",
+     "x0": "k * 0.83",
+     "y0": "st.y + 0.6",
+     "x1": "-k * 0.83",
+     "y1": "st.y + 0.6",
+     "slack": "0.06 + twist.slack"
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "st.y + 0.5",
+     "r": 0.6
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "st.y + 0.35"
+    },
+    {
+     "op": "bar",
+     "x": "-k * 0.62",
+     "y": "C + 0.25"
+    },
+    {
+     "op": "exit",
+     "x": "-k * 0.62",
+     "y": "C + 0.25"
+    }
+   ]
+  }
+ ],
+ "keys": [
+  {
+   "name": "poteau",
+   "effort": 1,
+   "from": 0,
+   "weight": 0,
+   "x": 0.4,
+   "floor": 0.8,
+   "tip": "Poteau doré : pose le lacet dessus et lâche tout. S'il tient en équilibre, c'est sauvegardé, et la trappe au-dessus s'ouvre.",
+   "steps": [
+    {
+     "op": "let",
+     "name": "px",
+     "value": "jitter(0.08)"
+    },
+    {
+     "op": "bar",
+     "as": "post",
+     "x": "px",
+     "y": "F - 0.35",
+     "mat": "gold",
+     "r": 0.022
+    },
+    {
+     "op": "tip",
+     "x": "px",
+     "y": "F - 0.35",
+     "r": 0.45
+    },
+    {
+     "op": "opens",
+     "post": "post.i"
+    }
+   ]
+  },
+  {
+   "name": "œillets",
+   "effort": 2,
+   "from": 4,
+   "weight": 2,
+   "x": 0.62,
+   "floor": 0.8,
+   "tip": "Œillets : le lacet passé dans tous à la fois ouvre la trappe. Accroche un bout d'un côté, enfile l'autre.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "0.4 * k",
+     "y": "F - 0.3"
+    },
+    {
+     "op": "bar",
+     "x": "-0.4 * k",
+     "y": "F - 0.3"
+    },
+    {
+     "op": "ring",
+     "as": "a",
+     "x": -0.3,
+     "y": "F - 0.67",
+     "r": 0.075,
+     "turn": 0.9
+    },
+    {
+     "op": "ring",
+     "as": "b",
+     "x": 0,
+     "y": "F - 0.67",
+     "r": 0.075,
+     "turn": 0.9
+    },
+    {
+     "op": "ring",
+     "as": "c",
+     "x": 0.3,
+     "y": "F - 0.67",
+     "r": 0.075,
+     "turn": 0.9
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "F - 0.67",
+     "r": 0.75,
+     "gate": true
+    },
+    {
+     "op": "button",
+     "x": "-0.7 * k",
+     "y": "F - 0.57"
+    },
+    {
+     "op": "opens",
+     "rings": [
+      "a.i",
+      "b.i",
+      "c.i"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "œillets croisés",
+   "effort": 2,
+   "from": 11,
+   "weight": 1.5,
+   "x": 0.62,
+   "floor": 0.8,
+   "tip": "Œillets croisés : un de côté, un à plat. Le lacet dans les deux à la fois ouvre la trappe.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "0.4 * k",
+     "y": "F - 0.3"
+    },
+    {
+     "op": "bar",
+     "x": "-0.4 * k",
+     "y": "F - 0.3"
+    },
+    {
+     "op": "ring",
+     "as": "a",
+     "x": "0.3 * k",
+     "y": "F - 0.72",
+     "r": 0.075,
+     "turn": 0.9
+    },
+    {
+     "op": "ring",
+     "as": "b",
+     "x": "-0.22 * k",
+     "y": "F - 0.47",
+     "r": 0.075,
+     "up": true
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "F - 0.6",
+     "r": 0.7,
+     "gate": true
+    },
+    {
+     "op": "opens",
+     "rings": [
+      "a.i",
+      "b.i"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "tirette",
+   "effort": 1,
+   "from": 5,
+   "weight": 1.5,
+   "x": 0.6,
+   "floor": 0.85,
+   "beyond": 0.35,
+   "tip": "Tirette : accroche-toi et laisse ton poids tirer. La trappe s'ouvre.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "-k * 0.6",
+     "y": "F - 0.5"
+    },
+    {
+     "op": "bar",
+     "x": 0,
+     "y": "F - 0.42"
+    },
+    {
+     "op": "pull",
+     "as": "p",
+     "x": "-k * 0.35",
+     "top": "F - 0.05",
+     "length": 0.55
+    },
+    {
+     "op": "tip",
+     "x": "-k * 0.35",
+     "y": "F - 0.4",
+     "r": 0.45,
+     "gate": true
+    },
+    {
+     "op": "button",
+     "x": "k * 0.6",
+     "y": "F - 0.4"
+    },
+    {
+     "op": "opens",
+     "pulls": [
+      "p.i"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "porte à ressort",
+   "effort": 3,
+   "from": 14,
+   "weight": 1.2,
+   "x": 0.6,
+   "floor": 0.75,
+   "beyond": 0.22,
+   "tip": "Porte à ressort : elle ne s'ouvre que tant que tu pèses sur la tirette. Pends un bout à la tirette, passe l'autre par la trappe.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "-k * 0.55",
+     "y": "F - 0.45"
+    },
+    {
+     "op": "pull",
+     "as": "p",
+     "x": "-k * 0.25",
+     "top": "F - 0.05",
+     "length": 0.4
+    },
+    {
+     "op": "tip",
+     "x": "-k * 0.25",
+     "y": "F - 0.35",
+     "r": 0.5,
+     "gate": true
+    },
+    {
+     "op": "button",
+     "x": "k * 0.55",
+     "y": "F - 0.35"
+    },
+    {
+     "op": "opens",
+     "pulls": [
+      "p.i"
+     ],
+     "held": true
+    }
+   ]
+  },
+  {
+   "name": "colonne d'œillets",
+   "effort": 3,
+   "from": 20,
+   "weight": 1,
+   "x": 0.5,
+   "floor": 0.9,
+   "tip": "Colonne d'œillets : enfile le lacet de bas en haut dans les trois à la fois.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "-k * 0.5",
+     "y": "F - 0.55"
+    },
+    {
+     "op": "bar",
+     "x": "k * 0.5",
+     "y": "F - 0.25"
+    },
+    {
+     "op": "ring",
+     "as": "a",
+     "x": 0,
+     "y": "F - 0.85",
+     "r": 0.075,
+     "up": true
+    },
+    {
+     "op": "ring",
+     "as": "b",
+     "x": 0,
+     "y": "F - 0.6",
+     "r": 0.075,
+     "up": true
+    },
+    {
+     "op": "ring",
+     "as": "c",
+     "x": 0,
+     "y": "F - 0.35",
+     "r": 0.075,
+     "up": true
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "F - 0.6",
+     "r": 0.6,
+     "gate": true
+    },
+    {
+     "op": "button",
+     "x": "-k * 0.6",
+     "y": "F - 0.2"
+    },
+    {
+     "op": "opens",
+     "rings": [
+      "a.i",
+      "b.i",
+      "c.i"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "deux tirettes",
+   "effort": 2,
+   "from": 22,
+   "weight": 1,
+   "x": 0.6,
+   "floor": 0.85,
+   "beyond": 0.35,
+   "tip": "Deux tirettes : la trappe ne s'ouvre que si tu pèses sur les deux à la fois, un bout à chacune.",
+   "steps": [
+    {
+     "op": "bar",
+     "x": "-k * 0.6",
+     "y": "F - 0.85"
+    },
+    {
+     "op": "bar",
+     "x": 0,
+     "y": "F - 0.5"
+    },
+    {
+     "op": "pull",
+     "as": "p",
+     "x": -0.4,
+     "top": "F - 0.05",
+     "length": 0.5
+    },
+    {
+     "op": "pull",
+     "as": "q",
+     "x": 0.4,
+     "top": "F - 0.05",
+     "length": 0.5
+    },
+    {
+     "op": "tip",
+     "x": 0,
+     "y": "F - 0.4",
+     "r": 0.6,
+     "gate": true
+    },
+    {
+     "op": "button",
+     "x": 0,
+     "y": "F - 0.25"
+    },
+    {
+     "op": "opens",
+     "pulls": [
+      "p.i",
+      "q.i"
+     ]
+    }
+   ]
+  }
+ ]
 }

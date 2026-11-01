@@ -1,21 +1,63 @@
+/* The page round the scene. Everything is a sewn tag: a strip of cloth,
+   its edge stitched (a dashed line just inside), its words in a rounded
+   hand; the titles in a book's serif. */
 :root {
   --ink: #2b2118;
   --paper: #fff8ec;
+  --cloth: rgba(255, 246, 230, 0.92);
+  --stitch: rgba(120, 84, 52, 0.55);
   --accent: #e35d3a;
   --ok: #4caf6a;
+  --head: #ff8a3d;
+  --tail: #3d9bff;
+  --gold: #f2c14e;
+  --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; overflow: hidden; background: #1c1612; font-family: ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; color: var(--ink); user-select: none; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1c1612; font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif; color: var(--ink); user-select: none; }
 canvas { display: block; touch-action: none; }
+.hidden { display: none !important; }
+.serif { font-family: var(--serif); font-weight: 400; }
 
-#hud { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); pointer-events: none; }
-#hud .row { display: flex; gap: 22px; background: rgba(255, 248, 236, 0.88); padding: 8px 18px; border-radius: 999px; font-weight: 700; font-variant-numeric: tabular-nums; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18); }
-#time { min-width: 4.5em; text-align: right; }
+/* a sewn tag */
+.tag { position: relative; background: var(--cloth); border-radius: 10px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22); }
+.tag::after { content: ''; position: absolute; inset: 3px; border: 1.5px dashed var(--stitch); border-radius: 8px; pointer-events: none; }
 
-#ends { position: fixed; bottom: 16px; left: 16px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.end { display: flex; align-items: center; gap: 10px; background: rgba(255, 248, 236, 0.9); padding: 8px 12px; border-radius: 14px; font-size: 14px; width: 330px; border: 3px solid transparent; transition: border-color 0.15s; }
-#end0 { --c: #ff8a3d; } #end1 { --c: #3d9bff; }
-.end .key { flex: 0 0 74px; text-align: center; font-weight: 800; font-size: 12px; line-height: 1.15; color: white; background: var(--c); border-radius: 10px; padding: 6px 4px; }
+/* the bar at the top: where, how long, buttons saved, how high */
+#hud { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: calc(100vw - 24px); }
+#hud .row { display: flex; align-items: baseline; gap: 18px; padding: 8px 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 15px; }
+#time { min-width: 4.3em; text-align: right; opacity: 0.8; }
+#storey { font-family: var(--serif); font-weight: 400; font-style: italic; }
+#storey:empty { display: none; }
+.wallet { display: inline-flex; align-items: center; gap: 5px; }
+.btn-icon { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--gold); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.15); position: relative; top: 2px; }
+.btn-icon::before { content: ''; position: absolute; inset: 4px; background: radial-gradient(circle, rgba(0,0,0,0.45) 1.2px, transparent 1.5px) 0 0 / 3px 3px; }
+.height small { font-weight: 600; opacity: 0.55; margin-left: 6px; font-size: 12px; }
+.wallet.bump { animation: bump 0.35s ease; }
+@keyframes bump { 40% { transform: scale(1.35); } }
+
+/* élan: five stitches that light up as the grips follow one another */
+#flow { display: flex; gap: 5px; opacity: 0; transition: opacity 0.4s; }
+#flow.on { opacity: 1; }
+#flow i { width: 18px; height: 5px; border-radius: 3px; background: rgba(255, 248, 236, 0.25); transition: background 0.2s, box-shadow 0.2s; }
+#flow i.lit { background: #ffcf6a; box-shadow: 0 0 8px #ffb04a; }
+#flow.max i.lit { background: #fff1b8; box-shadow: 0 0 12px #ffd36a; }
+
+/* on the right: the challenge of the stretch, what is carried */
+#side { position: fixed; top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
+#challenge { padding: 8px 14px 8px 12px; font-weight: 700; font-size: 13px; max-width: 240px; }
+#challenge small { display: block; font-weight: 600; opacity: 0.55; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+#challenge.failed span { text-decoration: line-through; opacity: 0.5; }
+#challenge.met { background: rgba(232, 248, 226, 0.95); }
+#items { display: flex; gap: 6px; }
+#items span { background: var(--cloth); border-radius: 8px; padding: 4px 9px; font-size: 12px; font-weight: 700; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+
+/* each end: what it does, its strength (shown while the gestures are new, or with H) */
+#ends { position: fixed; bottom: 16px; left: 16px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; transition: opacity 0.6s; }
+#ends.learned { opacity: 0; }
+.end { display: flex; align-items: center; gap: 10px; background: var(--cloth); padding: 8px 12px; border-radius: 12px; font-size: 14px; width: 300px; border: 3px solid transparent; transition: border-color 0.15s; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2); }
+#end0 { --c: var(--head); } #end1 { --c: var(--tail); }
+.end .key { flex: 0 0 70px; text-align: center; font-weight: 800; font-size: 12px; line-height: 1.15; color: white; background: var(--c); border-radius: 9px; padding: 6px 4px; }
 .end .key small { display: block; font-weight: 600; opacity: 0.85; }
 .end.pressed { border-color: var(--c); }
 .end > div { flex: 1; }
@@ -26,41 +68,85 @@ canvas { display: block; touch-action: none; }
 .end .bar i { display: block; height: 100%; width: 100%; background: var(--c); }
 .end.tired .bar i { background: #ff3b30; }
 
-#hint { position: fixed; bottom: 22px; left: 370px; right: 16px; font-size: 16px; font-weight: 700; color: var(--paper); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7); pointer-events: none; }
-.screen b.head { color: #ff8a3d; } .screen b.tail { color: #3d9bff; }
+/* the line of help: at the bottom, on a strip of shade */
+#hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100vw - 32px)); text-align: center; font-size: 15px; font-weight: 700; line-height: 1.35; color: var(--paper); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); pointer-events: none; padding: 8px 16px; border-radius: 12px; background: rgba(20, 14, 10, 0.45); backdrop-filter: blur(3px); transition: opacity 0.3s; }
+#hint:empty { opacity: 0; }
+body.cards #hint { left: calc(50% + 160px); width: min(620px, calc(100vw - 360px)); }
 
-#toast { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); font-weight: 800; font-size: 22px; color: var(--paper); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap; }
+#toast { position: fixed; top: 92px; left: 50%; transform: translateX(-50%); font-weight: 800; font-size: 21px; color: var(--paper); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); opacity: 0; transition: opacity 0.25s; pointer-events: none; text-align: center; width: min(760px, calc(100vw - 32px)); }
 #toast.show { opacity: 1; }
 
-.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(28, 22, 18, 0.72); color: var(--paper); padding: 16px; text-align: center; }
-.screen.hidden { display: none; }
-.screen h1 { font-size: clamp(40px, 9vw, 84px); margin: 0; letter-spacing: 0.06em; }
-.screen .tag { opacity: 0.8; margin: 6px 0 18px; }
-.screen .keys { max-width: 620px; line-height: 1.5; opacity: 0.85; }
-.screen button { margin-top: 18px; font: inherit; font-weight: 800; font-size: 20px; padding: 10px 34px; border: 0; border-radius: 999px; background: var(--accent); color: white; cursor: pointer; }
-
-@media (max-width: 760px) {
-  .end { width: 220px; }
-  .end em { display: none; }
-  #hint { left: 16px; bottom: auto; top: 60px; font-size: 14px; }
-}
-
-.hidden { display: none !important; }
-.screen .buttons { display: flex; gap: 12px; }
-
-#storey { font-weight: 600; opacity: 0.75; }
-#storey:empty { display: none; }
-
 /* the card of a floor, as the lace comes into it: a name, a line, then it fades */
-#floor { position: fixed; top: 26%; left: 50%; transform: translate(-50%, 8px); text-align: center; color: var(--paper); pointer-events: none; opacity: 0; transition: opacity 1.6s ease, transform 1.6s ease; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65); }
+#floor { position: fixed; top: 26%; left: 50%; transform: translate(-50%, 8px); text-align: center; color: var(--paper); pointer-events: none; opacity: 0; transition: opacity 1.6s ease, transform 1.6s ease; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65); width: min(90vw, 700px); }
 #floor.show { opacity: 1; transform: translate(-50%, 0); }
-#floor h2 { margin: 0; font-family: Georgia, 'Iowan Old Style', serif; font-weight: 400; font-size: clamp(30px, 5vw, 52px); letter-spacing: 0.04em; }
-#floor p { margin: 8px 0 0; font-family: Georgia, 'Iowan Old Style', serif; font-style: italic; font-size: clamp(15px, 2vw, 20px); opacity: 0.85; }
+#floor h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 5vw, 52px); letter-spacing: 0.04em; }
+#floor p { margin: 8px 0 0; font-family: var(--serif); font-style: italic; font-size: clamp(15px, 2vw, 20px); opacity: 0.85; }
 
-/* the laces found, to climb with */
-#laces { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; justify-content: center; }
+/* buttons */
+button { font: inherit; font-weight: 800; border: 0; border-radius: 999px; cursor: pointer; }
+button.primary { background: var(--accent); color: white; font-size: 19px; padding: 10px 30px; }
+button:disabled { opacity: 0.45; cursor: default; }
+
+/* the panel of a post: the time, the challenge, the stretch above, the shop */
+.panel { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); width: min(340px, calc(100vw - 32px)); max-height: calc(100vh - 140px); overflow: auto; background: var(--cloth); border-radius: 14px; padding: 16px 18px 18px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35); font-size: 14px; }
+.panel::after { content: ''; position: absolute; inset: 4px; border: 1.5px dashed var(--stitch); border-radius: 11px; pointer-events: none; }
+.panel h3 { margin: 0 0 6px; font-family: var(--serif); font-weight: 400; font-size: 26px; }
+.panel h4 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; }
+.panel .split { font-variant-numeric: tabular-nums; font-weight: 700; }
+.panel .split .better { color: #2f9a4f; } .panel .split .worse { color: #c0463c; }
+.panel .result { margin-top: 6px; font-weight: 700; }
+.panel .result.met { color: #2f9a4f; } .panel .result.failed { color: #9a6a4a; opacity: 0.8; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice button { background: rgba(0, 0, 0, 0.06); color: var(--ink); border-radius: 10px; padding: 9px 8px; font-size: 13px; text-align: left; border: 2px solid transparent; }
+.choice button small { display: block; font-weight: 600; opacity: 0.7; margin-top: 2px; }
+.choice button.on { border-color: var(--accent); background: rgba(227, 93, 58, 0.1); }
+.ware { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px dashed rgba(120, 84, 52, 0.25); }
+.ware div { flex: 1; }
+.ware b { display: block; }
+.ware small { opacity: 0.7; line-height: 1.25; display: block; }
+.ware button { background: var(--gold); color: var(--ink); padding: 5px 12px; font-size: 13px; white-space: nowrap; }
+.ware .have { font-size: 12px; font-weight: 700; opacity: 0.6; white-space: nowrap; }
+#post-go { margin-top: 14px; width: 100%; }
+
+/* the screens: the title, the ending */
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(28, 22, 18, 0.72); color: var(--paper); padding: 16px; text-align: center; overflow: auto; }
+.screen h1 { font-size: clamp(40px, 9vw, 84px); margin: 0; letter-spacing: 0.06em; }
+.screen h1.serif { letter-spacing: 0.02em; }
+.screen .tag-line { opacity: 0.8; margin: 6px 0 18px; font-family: var(--serif); font-style: italic; font-size: 18px; }
+.screen .keys { max-width: 640px; line-height: 1.5; opacity: 0.85; }
+.screen b.head { color: var(--head); } .screen b.tail { color: var(--tail); }
+.screen .buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+.screen .buttons button:not(.primary) { background: rgba(255, 248, 236, 0.14); color: var(--paper); font-size: 17px; padding: 10px 24px; }
+.screen .buttons button small { display: block; font-weight: 600; font-size: 12px; opacity: 0.75; }
+.choose { display: flex; gap: 34px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+.choose > div > small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; margin-bottom: 8px; }
+.options { margin-top: 20px; display: flex; gap: 24px; align-items: center; font-size: 14px; opacity: 0.85; flex-wrap: wrap; justify-content: center; }
+.options input { accent-color: var(--accent); }
+#title-wallet { font-weight: 700; }
+
+/* the laces found, to climb with; the kinds of lace */
+#laces, #kinds { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 #laces button { margin: 0; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 3px solid rgba(255, 248, 236, 0.25); background: var(--c); background-image: repeating-linear-gradient(45deg, transparent 0 6px, var(--s) 6px 8px); font-size: 0; }
 #laces button.on { border-color: var(--paper); }
 #laces button:disabled { background: rgba(255, 248, 236, 0.12); cursor: default; }
 #laces button:disabled::after { content: '?'; font-size: 16px; color: rgba(255, 248, 236, 0.5); }
-#laces + .lace-name { margin-top: 8px; font-size: 14px; opacity: 0.75; min-height: 1.2em; }
+#kinds button { background: rgba(255, 248, 236, 0.12); color: var(--paper); font-size: 13px; padding: 7px 14px; border: 2px solid transparent; }
+#kinds button.on { border-color: var(--paper); }
+#kinds button:disabled { opacity: 0.4; }
+.lace-name { margin-top: 8px; font-size: 13px; opacity: 0.75; min-height: 1.2em; max-width: 320px; }
+
+@media (max-width: 760px) {
+  #hud .row { gap: 10px; padding: 6px 12px; font-size: 13px; }
+  #time { min-width: 0; }
+  .height small { display: none; }
+  .end { width: 210px; }
+  .end em { display: none; }
+  body.cards #hint { left: 50%; width: calc(100vw - 32px); bottom: 150px; }
+  #hint { font-size: 13px; }
+  #side { top: 60px; }
+  #toast { font-size: 17px; top: 130px; }
+  .panel { top: auto; bottom: 12px; transform: none; right: 12px; max-height: 60vh; }
+}
+@media (max-width: 480px) {
+  #storey { display: none; }
+}

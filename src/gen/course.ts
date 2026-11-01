@@ -16,9 +16,12 @@
 //   - a stretch ends on a post (a trapdoor whose key is a post), further
 //     apart as the course goes up; each stretch has its twist (more chrome,
 //     slacker lines, no rest, wider rises);
-//   - each stretch is on a floor of the house, or of the sky (floors.ts):
-//     the next one once a good player would have had its share of the
-//     house's time, and a floor has more of its own parts.
+//   - each stretch is a floor of the house, or of the sky (floors.ts), and
+//     teaches its own parts: they come in there, one at a time, then often
+//     (a floor's parts are its `favours`); the stretch ends on its exam, the
+//     floor's set piece (a part marked `bravura`) under its post;
+//   - at each post the player may choose the stretch above: plain, or
+//     twisted (more chrome, slacker lines...), which pays more (`choices`).
 //
 // Only a window of the course is built at a time: from the section below the
 // post the lace last saved on, to the next post, whose trapdoor stays shut
@@ -28,12 +31,28 @@
 
 import { emptyLevel, merge, type Level, type Shelf } from '../level/level';
 import { STORY } from '../tuning';
-import { FLOORS, HOUSE, nextFloor } from './floors';
+import { FLOORS, nextFloor, ROUND } from './floors';
+
+/** random numbers of their own, from a few words: what the course adds draws from them, so that its parts stay as they were */
+function seeded(...a: (number | string)[]): () => number {
+  let h = 2166136261;
+  for (const ch of a.join('|')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  let s = (h >>> 0) % 2147483647 || 1;
+  return () => (s = (s * 16807) % 2147483647) / 2147483647;
+}
+
+/** the floors where the lights go out now and then (the bedroom, the attic, the night, the stars) */
+const DARK = new Set([6, 7, 9, 13]);
+/** the floor where the other lace waits, on its post */
+export const DAWN = 10;
 import { made, type Catalog, type Origins } from './layout';
 import { parts, pushBar, start, type Ascent, type Ctx, type Hold, type Key, type Obstacle, type Twist } from './parts';
 
 export interface Section {
   index: number;
+  /** its place in its stretch (0: the first above the post), and how many the stretch has */
+  place: number;
+  of: number;
   /** what it is made of, in words */
   name: string;
   /** it ends on a post */
@@ -83,12 +102,26 @@ export interface Options {
   force?: Record<number, Forced>;
   /** keep what made each thing of each section (the editor shows it) */
   trace?: boolean;
+  /** the stretch chosen above each post (by its section): 1 twisted, 0 (or not said) plain */
+  choices?: Record<number, number>;
 }
+
+/** where the course was when a post was laid: what it needs to lay out the stretch above again, another way */
+interface Snap { s: number; seen: string[]; floor: number }
 
 export class Course {
   private sections: Section[] = [];
   private seen = new Set<string>();
-  private rnd: () => number;
+  /** the state of the course's random numbers */
+  private s: number;
+  private rnd = () => (this.s = (this.s * 16807) % 2147483647) / 2147483647;
+  /** the course as it was at each post */
+  private snaps = new Map<number, Snap>();
+  /** the floor each part is taught on: the first whose favours have it */
+  private home = new Map<string, number>();
+  /** the stretch being laid: where it began, how many sections it has */
+  private stretchAt = 0;
+  private stretchOf = 0;
   private ascents: Ascent[];
   private obstacles: Obstacle[];
   private keys: Key[];
@@ -102,8 +135,8 @@ export class Course {
   private floor = 0;
 
   constructor(readonly seed: number, readonly catalog: Catalog, private options: Options = {}) {
-    let s = (seed * 7919 + 104729) % 2147483647 || 1;
-    this.rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    this.s = (seed * 7919 + 104729) % 2147483647 || 1;
+    FLOORS.forEach((f, k) => { for (const name of Object.keys(catalog.favours[f.name] ?? {})) if (!this.home.has(name)) this.home.set(name, k); });
     ({ ascents: this.ascents, obstacles: this.obstacles, keys: this.keys } = parts(catalog));
     const post = this.keys.find((k) => k.name === 'poteau'), trapdoor = this.obstacles.find((o) => o.locked);
     if (!post) throw new Error('le catalogue n\'a pas de clé « poteau » : un tronçon finit sur un poteau');
@@ -119,6 +152,33 @@ export class Course {
   section(k: number): Section {
     while (this.sections.length <= k) this.next();
     return this.sections[k];
+  }
+
+  /** the twist the stretch above the post of section k has if chosen twisted (none before the twists come) */
+  alternative(k: number): Twist | null {
+    if (k < this.catalog.course.twistFrom) return null;
+    const r = seeded('twist', this.seed, k);
+    return this.twists[1 + Math.floor(r() * (this.twists.length - 1))];
+  }
+
+  /** the stretch above the post of section k chosen: 1 twisted, 0 plain; laid out again if it was otherwise */
+  pick(k: number, c: number): void {
+    const choices = (this.options.choices ??= {});
+    if ((choices[k] ?? 0) === c) return;
+    choices[k] = c;
+    const snap = this.snaps.get(k);
+    if (!snap || this.sections.length <= k + 1) return;
+    this.sections.length = k + 1;
+    for (const key of [...this.snaps.keys()]) if (key > k) this.snaps.delete(key);
+    this.s = snap.s;
+    this.seen = new Set(snap.seen);
+    this.floor = snap.floor;
+    this.newStretch(k);
+  }
+
+  /** whether the stretch above the post of section k is twisted */
+  twisted(k: number): boolean {
+    return (this.options.choices?.[k] ?? 0) === 1 && !!this.alternative(k);
   }
 
   /** the first section at or above k that ends on a post */
@@ -170,7 +230,8 @@ export class Course {
     if (!prev) {
       const exit = made(c, { part: 'départ', path: '' }, () => start(c));
       L.top = exit.y;
-      this.sections.push({ index, name: 'départ', post: true, level: L, exit, twist: this.twist, floor: 0, pace: 0, effort: 0, origins });
+      this.sections.push({ index, place: 0, of: 1, name: 'départ', post: true, level: L, exit, twist: this.twist, floor: 0, pace: 0, effort: 0, origins });
+      this.snaps.set(index, { s: this.s, seen: [...this.seen], floor: this.floor });
       this.newStretch(index);
       return;
     }
@@ -186,12 +247,37 @@ export class Course {
     made(c, { part: 'station', path: '' }, () => pushBar(c, st.x, st.y));
     const exit = made(c, { part: obstacle.name, path: '' }, () => obstacle.lay(c, k, st, key));
     for (const p of [ascent, obstacle, key]) if (p) this.seen.add(p.name);
+    this.extras(c, index, prev.exit, exit, post);
     L.top = exit.y;
     const name = [ascent.name, obstacle.locked ? key!.name : obstacle.name].filter((n) => n !== 'rien').join(', ');
     const ceiling = post ? L.gates.find((g) => g.post !== undefined)?.y1 : undefined;
     const pace = prev.pace + STORY.pace.base + STORY.pace.effort * combo.effort + STORY.pace.metre * (exit.y - prev.exit.y);
-    this.sections.push({ index, name, post, level: L, exit, twist: this.twist, floor: this.floor, ceiling, pace, effort: combo.effort, ascent, obstacle, key, origins });
-    if (post) this.newStretch(index); else this.left--;
+    this.sections.push({ index, place: index - this.stretchAt - 1, of: this.stretchOf, name, post, level: L, exit, twist: this.twist, floor: this.floor, ceiling, pace, effort: combo.effort, ascent, obstacle, key, origins });
+    if (post) {
+      this.snaps.set(index, { s: this.s, seen: [...this.seen], floor: this.floor });
+      this.newStretch(index);
+    } else this.left--;
+  }
+
+  /**
+   * What the course adds to a section beyond its parts (drawn from numbers
+   * of their own, so that the parts stay as they were): a button where it is
+   * risky to go (by a hazard, out on the far side), the lights that go out
+   * now and then on the darker floors, and at dawn, on its post, the other lace.
+   */
+  private extras(c: Ctx, index: number, from: { x: number; y: number }, exit: { x: number; y: number }, post: boolean): void {
+    const L = c.L, r = seeded('extras', this.seed, index);
+    const h = L.hazards[0];
+    if (h) L.buttons.push([Math.max(-0.75, Math.min(0.75, (h.x0 + h.x1) / 2 + (r() - 0.5) * 0.1)), h.y1 + 0.07]);
+    else if (r() < 0.45) {
+      const side = from.x >= 0 ? -1 : 1;
+      L.buttons.push([side * (0.66 + 0.08 * r()), from.y + (exit.y - from.y) * (0.35 + 0.3 * r())]);
+    }
+    if (DARK.has(this.floor) && !post && index - this.stretchAt > 1 && r() < 0.5) L.blackouts.push({ y0: from.y, y1: exit.y, period: 8 + 4 * r(), phase: 10 * r() });
+    if (post && this.floor === DAWN) {
+      const g = L.bars.find((b) => b.mat === 'gold');
+      if (g) L.hangs.push({ x: g.x + g.r + 0.013, top: g.y + 0.004, length: 1.0, partner: true });
+    }
   }
 
   /**
@@ -201,31 +287,36 @@ export class Course {
    * house's time is up; up there, a new one each stretch.
    */
   private newStretch(index: number): void {
-    const { stretch, twistFrom } = this.catalog.course, twists = this.twists;
+    const { stretch } = this.catalog.course;
     this.left = stretch.base + Math.min(stretch.most, Math.floor(index / stretch.every)) + (this.rnd() < stretch.longer ? 1 : 0);
-    this.twist = index < twistFrom ? twists[0] : twists[Math.floor(this.rnd() * twists.length)];
-    if (index === 0) return;
-    const f = this.floor, due = Math.floor((this.sections[index].pace / STORY.skyAfter) * HOUSE);
-    this.floor = f >= HOUSE ? nextFloor(f) : Math.min(f + 1, due, HOUSE);
-    this.floor = Math.max(f, this.floor);
+    this.stretchAt = index;
+    this.stretchOf = this.left + 1;
+    // plain, unless the player chose it twisted at the post below
+    this.twist = this.twisted(index) ? this.alternative(index)! : this.twists[0];
+    // a floor a stretch: the house one after the other, then the sky
+    if (index > 0) this.floor = nextFloor(this.floor);
   }
 
   /** the parts of section `index`, as the rules allow (see the top of this file) */
   private choose(index: number, prev: Section, post: boolean): Combo {
-    const open = <T extends { from: number; name: string }>(a: T[]) => a.filter((p) => p.from <= index);
+    // a part comes in on the floor that teaches it (or, if no floor does, at its section); a set piece, only as its floor's exam
+    const taught = (p: { from: number; name: string }) => { const h = this.home.get(p.name); return h === undefined ? p.from <= index : h <= this.floor || index >= p.from + 60; };
+    const open = <T extends { from: number; name: string; bravura?: string }>(a: T[]) => a.filter((p) => !p.bravura && taught(p));
+    const exam = post ? this.ascents.filter((a) => a.bravura === FLOORS[this.floor].name || (a.bravura && this.floor >= ROUND && a.bravura !== FLOORS[DAWN].name && this.rnd() < 0.5)) : [];
     const rules = this.catalog.course, POST = this.post, TRAPDOOR = this.trapdoor;
     const heavy = (a?: Ascent) => (a?.nodes ?? 0) > rules.heavy;
     const cap = rules.cap.base + Math.min(rules.cap.most, Math.floor(index / rules.cap.every));
     const favours = this.catalog.favours[FLOORS[this.floor].name] ?? {}, favour = (name?: string) => (name && favours[name]) || 1;
     const prevEffort = (prev.ascent?.effort ?? 0) + (prev.obstacle?.effort ?? 0) + (prev.key?.effort ?? 0);
     const combos: Combo[] = [];
-    for (const ascent of open(this.ascents)) {
+    for (const ascent of exam.length ? exam : open(this.ascents)) {
       const obstacles = post ? [TRAPDOOR] : open(this.obstacles);
       for (const obstacle of obstacles) {
         const keys = obstacle.locked ? (post ? [POST] : open(this.keys).filter((q) => q !== POST)) : [undefined];
         for (const key of keys) {
           const effort = ascent.effort + obstacle.effort + (key?.effort ?? 0);
-          const weight = ascent.weight * (post ? 1 : obstacle.weight) * (key && !post ? key.weight : 1);
+          // (a set piece has no weight of its own: it never comes but as an exam, where all are alike)
+          const weight = (ascent.bravura ? 1 : ascent.weight) * (post ? 1 : obstacle.weight) * (key && !post ? key.weight : 1);
           combos.push({ ascent, obstacle, key, effort, weight: weight * favour(ascent.name) * (post ? 1 : favour(obstacle.name) * favour(key?.name)) });
         }
       }

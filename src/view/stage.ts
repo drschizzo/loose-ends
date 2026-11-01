@@ -132,12 +132,12 @@ export class Stage {
     console.info(`Image abaissée au niveau ${this.level} de qualité (${mean.toFixed(1)} ms par image)`);
   }
 
-  /** the camera eases towards (x, y), kept between the heights `low` and `high`; the sun's shadows follow it */
-  follow(x: number, y: number, low: number, high: number, dt: number): void {
+  /** the camera eases towards (x, y), kept between the heights `low` and `high`, drawn back `zoom` times as far; the sun's shadows follow it */
+  follow(x: number, y: number, low: number, high: number, dt: number, zoom = 1): void {
     const f = this.focus, k = Math.min(1, dt * 3);
     f.x += (x * 0.4 - f.x) * k;
     f.y += (Math.max(low, Math.min(high, y)) - f.y) * k;
-    this.camera.position.set(f.x, f.y + 0.1, 2.5);
+    this.camera.position.set(f.x, f.y + 0.1, 2.5 * zoom);
     this.camera.lookAt(f.x, f.y, 0);
     this.rake(f.x, f.y);
   }
@@ -162,8 +162,11 @@ export class Stage {
 
   /** the lamps lit round where the camera looks (the decor's, `fixtures`), at time t; the lace's own light at `lace` */
   lights(fixtures: readonly Fixture[], t: number, lace: THREE.Vector3 | null): void {
-    this.lamps.light(fixtures, this.focus.x, this.focus.y, t, lace);
+    this.lamps.light(fixtures, this.focus.x, this.focus.y, t, lace, this.dark);
   }
+
+  /** the lights out (a blackout), 0 to 1: the room goes dark round the lace's glow */
+  dark = 0;
 
   /** (the editor) the camera `dist` from (x, y), turned `yaw` round the vertical and `pitch` up (rad); the sun's shadows follow it */
   look(x: number, y: number, dist: number, yaw: number, pitch: number): void {
@@ -191,9 +194,9 @@ export class Stage {
     this.fog.color.copy(l.bg);
     this.hemi.color.copy(l.sky);
     this.hemi.groundColor.copy(l.ground);
-    this.hemi.intensity = l.ambient;
+    this.hemi.intensity = l.ambient * (1 - 0.88 * this.dark);
     this.sun.color.copy(l.sun);
-    this.sun.intensity = l.sunI;
+    this.sun.intensity = l.sunI * (1 - 0.92 * this.dark);
     this.sun.shadow.intensity = l.shade;
     this.front = l.front;
     this.image.rayColor.value.copy(l.sun).multiplyScalar(l.rays);

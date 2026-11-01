@@ -17,6 +17,7 @@ import { tsl } from './tsl';
 export const END_COLORS = ['#ff8a3d', '#3d9bff'].map((c) => new THREE.Color(c));
 const RED = new THREE.Color('#ff3b30');
 const GREEN = new THREE.Color('#2fbf5a');
+const GOLD = new THREE.Color(2.2, 1.7, 0.5);
 const GHOST = new THREE.Color(0, 0.3, 0.9);
 const REST = new THREE.Color(0, 0.45, 0.1);
 const CORD = new THREE.Color(0.45, 0.32, 0);
@@ -30,18 +31,17 @@ function strain(c: THREE.Color, effort: number): void {
   else c.setRGB(0.5 + 0.7 * Math.min(1, effort), 0.25 * (1 - Math.min(1, effort)), 0);
 }
 
-/** a label drawn on a canvas, as a sprite, redrawn when its text changes */
+/** a label drawn on a canvas, as a sprite as wide as its words, redrawn when they change */
 class Label {
   readonly sprite: THREE.Sprite;
   private canvas = document.createElement('canvas');
   private text = '';
 
-  constructor(scene: THREE.Scene, text = '', color = '#ffffff') {
-    this.canvas.width = 256; this.canvas.height = 64;
+  constructor(scene: THREE.Scene, text = '', color = '#ffffff', private plain = false) {
+    this.canvas.width = 512; this.canvas.height = 64;
     const t = new THREE.CanvasTexture(this.canvas);
     t.colorSpace = THREE.SRGBColorSpace;
     this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
-    this.sprite.scale.set(0.26, 0.065, 1);
     this.sprite.renderOrder = 4;
     scene.add(this.sprite);
     this.set(text, color);
@@ -50,13 +50,18 @@ class Label {
   set(text: string, color: string): void {
     if (this.text === text + color) return;
     this.text = text + color;
-    const g = this.canvas.getContext('2d')!;
-    g.clearRect(0, 0, 256, 64);
-    g.fillStyle = 'rgba(20, 16, 12, 0.78)';
-    g.beginPath(); g.roundRect(4, 8, 248, 48, 24); g.fill();
-    g.fillStyle = color; g.font = 'bold 28px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(text, 128, 33);
+    const g = this.canvas.getContext('2d')!, font = 'bold 28px ui-rounded, system-ui, sans-serif';
+    g.font = font;
+    // the canvas as wide as the words and their pill (a power of two is not needed: it is redrawn whole)
+    const w = Math.min(512, Math.ceil(g.measureText(text).width) + 44);
+    if (this.canvas.width !== w) { this.canvas.width = w; (this.sprite.material.map as THREE.CanvasTexture).dispose(); }
+    g.clearRect(0, 0, w, 64);
+    if (!this.plain) { g.fillStyle = 'rgba(20, 16, 12, 0.78)'; g.beginPath(); g.roundRect(4, 8, w - 8, 48, 24); g.fill(); }
+    g.font = font; g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (this.plain) { g.lineWidth = 6; g.strokeStyle = 'rgba(20, 16, 12, 0.7)'; g.strokeText(text, w / 2, 33); }
+    g.fillText(text, w / 2, 33);
     this.sprite.material.map!.needsUpdate = true;
+    this.sprite.scale.set(0.065 * (w / 64), 0.065, 1);
   }
 }
 
@@ -96,6 +101,11 @@ export class Overlay {
   private bursts: { m: THREE.Mesh; t: number }[];
   private leash: THREE.Line;
   private aimDot: THREE.Mesh;
+  /** words that rise from the lace and fade (a clean catch, a button) */
+  private pops: { l: Label; t: number; x: number; y: number }[];
+  /** the eyes: when they next blink, how open they are */
+  private blinkAt = 2;
+  private open = 1;
   private tint = new THREE.Color();
   private u = new THREE.Vector3();
   /** the lace's wear at the last frame, and how fresh the hurt of each node is (1 just hurt, fading) */
@@ -126,14 +136,22 @@ export class Overlay {
     this.bursts = Array.from({ length: 4 }, () => ({ m: marker(scene, new THREE.Mesh(new THREE.RingGeometry(0.02, 0.026, 32), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, depthTest: false, opacity: 0 })), 3), t: 1 }));
     this.leash = marker(scene, new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: '#ffffff', transparent: true, opacity: 0.5, dashSize: 0.015, gapSize: 0.012, depthTest: false })), 2);
     this.aimDot = marker(scene, new THREE.Mesh(new THREE.CircleGeometry(0.008, 16), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.8, depthTest: false })), 2);
+    this.pops = Array.from({ length: 4 }, () => { const l = new Label(scene, '', '#ffffff', true); l.sprite.visible = false; return { l, t: 1, x: 0, y: 0 }; });
   }
 
-  /** a ring that widens and fades where end k took hold */
-  burst(x: number, y: number, k: number): void {
+  /** words that rise from (x, y) and fade */
+  pop(text: string, x: number, y: number, color = '#ffe08a'): void {
+    const p = this.pops.find((q) => q.t >= 1) ?? this.pops[0];
+    p.l.set(text, color);
+    p.t = 0; p.x = x; p.y = y;
+  }
+
+  /** a ring that widens and fades where end k took hold (gold, for a clean catch) */
+  burst(x: number, y: number, k: number, gold = false): void {
     const b = this.bursts.find((q) => q.t >= 1) ?? this.bursts[0];
     b.t = 0;
     b.m.position.set(x, y, 0.05);
-    (b.m.material as THREE.MeshBasicMaterial).color.copy(END_COLORS[k]);
+    (b.m.material as THREE.MeshBasicMaterial).color.copy(gold ? GOLD : END_COLORS[k]);
   }
 
   draw(world: World, cords: CordsView, playing: boolean, pointer: { x: number; y: number }, showHints: boolean, dt: number): void {
@@ -171,6 +189,7 @@ export class Overlay {
       }
       u.set(q[0] - p[0], q[1] - p[1], q[2] - p[2]).normalize();
       this.aglets[k].position.set(p[0] + u.x * 0.012, p[1] + u.y * 0.012, p[2] + u.z * 0.012);
+      this.aglets[k].scale.set(LACE.radius / 0.008, 1, LACE.radius / 0.008);
       this.aglets[k].quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, u);
       this.grip(e, k, lace.anchor(e), p, playing);
       this.targets[k].visible = this.hints[k].sprite.visible = !!h && !e.held;
@@ -181,17 +200,32 @@ export class Overlay {
         this.hints[k].sprite.visible = !e.held && showHints;
       }
       if (k === 0) {
-        // the eyes of the head look where it goes, or down
+        // the eyes of the head: they look at the hold it could take, or where it goes, or down; they blink;
+        // they narrow as a grip tires, and open wide as the lace falls
         const nx = -u.y, ny = u.x;
-        const look = leader === e ? [pointer.x - p[0], pointer.y - p[1]] : [0, -1];
+        const target = h ?? (e.grip ? null : lace.holdFor(lace.ends[1]));
+        const look = target ? [target.x - p[0], target.y - p[1]] : leader === e ? [pointer.x - p[0], pointer.y - p[1]] : [0, -1];
         const ll = Math.hypot(look[0], look[1]) || 1;
+        const tired = lace.ends.some((o) => o.grip && o.stamina < 0.35), falling = playing && !lace.ends.some((o) => o.grip) && lace.speedOf() > 1.1;
+        this.blinkAt -= dt;
+        if (this.blinkAt < -0.13) this.blinkAt = 2.5 + 3 * Math.random();
+        const want = this.blinkAt < 0 ? 0.12 : falling ? 1.25 : tired ? 0.5 : 1;
+        this.open += (want - this.open) * Math.min(1, dt * (this.blinkAt < 0 ? 40 : 10));
         this.eyes.forEach((g, s) => {
           const sd = s === 0 ? 1 : -1;
           g.position.set(p[0] + u.x * 0.03 + nx * sd * 0.009, p[1] + u.y * 0.03 + ny * sd * 0.009, p[2] + LACE.radius * 0.8);
+          g.scale.set(Math.max(1, this.open) * LACE.radius / 0.008, this.open * LACE.radius / 0.008, LACE.radius / 0.008);
           g.getObjectByName('pupil')!.position.set((look[0] / ll) * 0.0045, (look[1] / ll) * 0.0045, 0.006);
+          g.getObjectByName('pupil')!.visible = this.open > 0.3;
         });
       }
     });
+    for (const q of this.pops) {
+      q.t = Math.min(1, q.t + dt / 1.1);
+      q.l.sprite.visible = q.t < 1;
+      q.l.sprite.position.set(q.x, q.y + 0.05 + 0.1 * q.t, 0.08);
+      q.l.sprite.material.opacity = Math.min(1, 3 * (1 - q.t));
+    }
     for (const b of this.bursts) {
       b.t = Math.min(1, b.t + dt * 2.5);
       b.m.scale.setScalar(1 + 3 * b.t);

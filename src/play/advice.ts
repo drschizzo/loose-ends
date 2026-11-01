@@ -4,6 +4,7 @@
 import type { Level } from '../level/level';
 import { PLAY } from '../tuning';
 import type { Lace } from './lace';
+import { knows } from './progress';
 
 export interface Situation {
   lace: Lace;
@@ -14,18 +15,27 @@ export interface Situation {
   isOpen: (gate: number) => boolean;
 }
 
+/**
+ * The line of help, from what the lace does. What the player has shown they
+ * know is not said again: a gesture made often enough (see `learn`), its
+ * help goes; what is left is said once the player seems stuck.
+ */
 export function advice({ lace, level, tangled, isOpen }: Situation): string {
   const [h, t] = lace.ends, [cx, cy] = lace.centre(), leader = lace.leader();
-  if (lace.ends.find((e) => e.grip && e.stamina < 0.35)) return 'Ta prise fatigue : accroche vite l\'autre bout, ou arrête de tendre et laisse pendre le lacet pour qu\'elle récupère.';
+  if (lace.ends.find((e) => e.grip && e.stamina < 0.35) && !knows('rest', 4)) return 'Ta prise fatigue : accroche vite l\'autre bout, ou arrête de tendre et laisse pendre le lacet pour qu\'elle récupère.';
   const tiring = lace.ends.find((e) => e.grip && e.load >= PLAY.restLoad && e.stamina < 0.85);
-  if (tiring) return 'Une prise fatigue quand l\'autre bout s\'étire pour monter (en rouge : ce qu\'il soulève). Pendu sous elle, le lacet la laisse récupérer (vert) : reprends ton souffle avant de tendre.';
+  if (tiring && !knows('rest', 2)) return 'Une prise fatigue quand l\'autre bout s\'étire pour monter (en rouge : ce qu\'il soulève). Pendu sous elle, le lacet la laisse récupérer (vert) : reprends ton souffle avant de tendre.';
   if (lace.slip > PLAY.aglet + 1) return 'Tu forces le nœud : le bout se faufile plus loin, mais il s\'effiloche. Relâche Espace dès qu\'il est passé.';
-  if (tangled > 1.5) return 'Emmêlé ? Maintiens Espace et ramène le bout par où il est passé : l\'aiguillette traverse les cordes et le lacet lui-même, le reste suit son chemin. Ça coince ? Garde Espace et tire fort : le bout force le passage, au prix de ses fibres.';
+  if (tangled > (knows('slip', 3) ? 6 : 1.5)) return 'Emmêlé ? Maintiens Espace et ramène le bout par où il est passé : l\'aiguillette traverse les cordes et le lacet lui-même, le reste suit son chemin. Ça coince ? Garde Espace et tire fort : le bout force le passage, au prix de ses fibres.';
   const tip = level.tips.find((q) => Math.hypot(q.x - cx, q.y - cy) < q.r && (q.gate === undefined || !isOpen(q.gate)));
   if (tip) return tip.text;
   // under a shut trapdoor: what opens it, every time (its key wears its mark)
   const k = level.gates.findIndex((g, i) => !isOpen(i) && g.y0 - cy > -0.2 && g.y0 - cy < 1.4);
-  if (k >= 0) return opens(level, k);
+  if (k >= 0 && (!knows('save', 3) || level.gates[k].post === undefined)) return opens(level, k);
+  if (knows('grip', 10)) {
+    if (!h.grip && !t.grip && !lace.supported && leader && lace.lying() && lace.speed() < 0.3 && !nearHold(lace, level) && !knows('throw', 3)) return 'Trop haut pour le bras : un coup sec de souris vers le haut lance le bout ; maintiens son clic pour qu\'il s\'accroche en haut de son vol.';
+    return '';
+  }
   if (h.grip && t.grip) return 'Les deux bouts tiennent. Relâche un clic : ce bout suivra la souris.';
   if (h.grip) return 'La queue (bleue) suit la souris. Amène-la contre une prise plus haute et maintiens clic droit.';
   if (t.grip) return 'La tête (orange) suit la souris. Amène-la contre une prise plus haute et maintiens clic gauche.';

@@ -15,6 +15,9 @@ export const LACES: LaceLook[] = [
   { name: 'Le ruban bleu', color: '#9fc3e0', stripe: '#ffffff', floor: 10 },
 ];
 
+/** the other lace of the pair: the one this one climbs to find, red as the thread that leads to it */
+export const PARTNER = { color: '#d8574a', stripe: '#f6e0c8' };
+
 const KEY = 'loose-ends:lace', HIGHEST = 'loose-ends:floor';
 
 const read = (key: string) => { try { return Number(localStorage.getItem(key) ?? 0) || 0; } catch { return 0; } };

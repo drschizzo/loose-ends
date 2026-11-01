@@ -5,7 +5,11 @@ import type { CableInit } from '@drschizzo/avbd-cables';
 import { placeKey, type Level } from '../level/level';
 import { BRAIDED, LAID } from '../view/laceMaterial';
 import { LACE, VINE } from '../tuning';
-import { chosen } from '../play/laces';
+import { chosen, PARTNER } from '../play/laces';
+import { progress } from '../play/progress';
+
+/** the lace climbing is the pair, knotted */
+const paired = () => progress.kind === 'paire';
 
 /** what a cord is, beyond its nodes: how it looks, what holds it, what it does */
 export interface Cord {
@@ -24,6 +28,10 @@ export interface Cord {
   fragile?: number;
   /** a strand of a cobweb: the lace sticks to it */
   sticky?: boolean;
+  /** the lace of the pair: its second half this colour (the other lace, knotted to it) */
+  color2?: string;
+  /** the other lace, waiting at dawn */
+  partner?: boolean;
 }
 
 /** the cords of a level: the lace first (cable 0), then the others; knots tie a node of a cord to a node of another */
@@ -34,12 +42,12 @@ export interface CordSet {
   knots: [number, number, number, number][];
 }
 
-/** how many nodes the lace has, whole */
-export const LACE_NODES = Math.round(LACE.length / LACE.segment) + 1;
+/** how many nodes the lace has, whole (of the kind it is now: see `fitKind`) */
+export const laceNodes = (): number => Math.round(LACE.length / LACE.segment) + 1;
 
 /** the lace lying on the start of a level, back and forth if the room is too narrow for it */
 export function lyingLace(L: Level): number[] {
-  const n = LACE_NODES, p: number[] = [];
+  const n = laceNodes(), p: number[] = [];
   let x = L.start.x0, y = L.start.y + LACE.radius + 0.002, dir = 1;
   for (let k = 0; k < n; k++) {
     p.push(x, y, 0);
@@ -49,10 +57,14 @@ export function lyingLace(L: Level): number[] {
   return p;
 }
 
-/** the nodes of a lace cut shorter, made whole again: what was cut grows back hanging down from its last node */
+/**
+ * The nodes of a lace cut shorter, made whole again: what was cut grows back
+ * hanging down from its last node (and a lace of a longer kind than the one
+ * now worn is cut to length)
+ */
 export function regrown(points: ArrayLike<number>): number[] {
-  const p = Array.from(points);
-  for (let k = p.length / 3; k < LACE_NODES; k++) p.push(p[p.length - 3], p[p.length - 2] - LACE.segment, p[p.length - 1]);
+  const p = Array.from(points).slice(0, 3 * laceNodes());
+  for (let k = p.length / 3; k < laceNodes(); k++) p.push(p[p.length - 3], p[p.length - 2] - LACE.segment, p[p.length - 1]);
   return p;
 }
 
@@ -97,12 +109,15 @@ export function cordsOf(L: Level, lace: ArrayLike<number> | null, seed: number):
     set.cords.push({ tag: LAID, segment: VINE.segment, pinFirst: false, pinLast: false, ...cord });
     return set.defs.length - 1;
   };
-  add(lace ? Array.from(lace) : lyingLace(L), { key: 'lace', color: chosen().color, tag: BRAIDED, segment: LACE.segment },
+  add(lace ? Array.from(lace) : lyingLace(L), { key: 'lace', color: chosen().color, tag: BRAIDED, segment: LACE.segment, ...(paired() ? { color2: PARTNER.color } : {}) },
     { radius: LACE.radius, mass: LACE.mass, bend: LACE.bend, endMass: LACE.endMass, boot: true });
 
   L.hangs.forEach((h, k) => {
+    // the other lace of the pair, hanging from the post at dawn (at the back of it, clear of where the lace drapes): a lace like this one, braided
+    if (h.partner && progress.reunited) return;
+    if (h.partner) add(straight(h.x, h.top, -0.075, h.x, h.top - h.length, -0.075, LACE.segment), { key: `partner ${placeKey(h.x, h.top)}`, color: PARTNER.color, tag: BRAIDED, segment: LACE.segment, pinFirst: true, partner: true }, { radius: 0.008, mass: LACE.mass, bend: 0.6, endMass: LACE.endMass });
     // a thread of cotton, thin and pale, for one that gives way
-    if (h.fragile) add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `thread ${placeKey(h.x, h.top)}`, color: '#e9e0cc', pinFirst: true, fragile: k }, { radius: 0.0045, mass: 0.0012 });
+    else if (h.fragile) add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `thread ${placeKey(h.x, h.top)}`, color: '#e9e0cc', pinFirst: true, fragile: k }, { radius: 0.0045, mass: 0.0012 });
     else add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `hang ${placeKey(h.x, h.top)}`, color: '#a8865a', pinFirst: true });
   });
   for (const k of L.skeins) {

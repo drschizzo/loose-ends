@@ -35,7 +35,7 @@ Le joueur n'a que trois gestes : **accrocher un bout**, **le lâcher**, **dépla
 | **Enfiler** | œillets (en ligne, croisés, en colonne) ✅, ○ peigne (passer dessus-dessous une rangée de dents), ○ boutonnière qui se referme | viser, garder un chemin topologique, tirer contre le frottement accumulé | contact corde/anneau sans traversée, frottement cumulé (lacer serre) |
 | **Les fils des autres** | cordes pendues ✅, rideau ✅, écheveaux de boucles ✅, fils à linge ✅, filet et échelle de corde noués ✅, ○ toile d'araignée, ○ pelote qui se dévide | se frayer un chemin, s'appuyer sur un tas, se méfier de ce qui ne tient à rien | contact corde/corde, tas qui dorment |
 | **Mécanismes** | tirette (sent le poids, ouvre une trappe) ✅, ○ contrepoids sur poulie (seau, ascenseur), ○ balance à deux plateaux, ○ store à cordon | utiliser son poids, sa longueur | tension mesurée, inextensibilité |
-| **Le lacet lui-même** | ○ types de lacet (fil fin et long, cordon épais, tuyau raide qui fait pont), ○ longueur variable (ciseaux qui coupent, rallonges) | changer la façon de jouer d'un niveau à l'autre | presets `CABLES`, raideur en flexion réelle |
+| **Le lacet lui-même** | types de lacet (fil fin et long, cordon épais, tuyau raide qui fait pont) ✅, la paire nouée ✅, longueur variable (ciseaux qui coupent ✅, ○ rallonges) | changer la façon de jouer d'un niveau à l'autre | presets `CABLES`, raideur en flexion réelle |
 | **Dangers** | ○ ciseaux (coupent, il faut `cut()` dans le moteur), ○ ventilateur (force externe), ○ fer chaud (zone où une prise brûle) | rythme, timing | extensions simples du moteur |
 
 ## 3. Comment tenir des dizaines de niveaux
@@ -73,10 +73,10 @@ Un niveau peut imposer un lacet, ou en proposer plusieurs, ce qui rend les nivea
 
 ### d. La rejouabilité
 
-- **Chrono et boutons** (déjà là) ; étoiles par niveau.
-- **Fantômes** : enregistrer les positions des nœuds du lacet (environ 3 Ko/s) et afficher ceux des meilleurs joueurs. Le moteur de tubes en dessine des centaines en un seul appel, sans les simuler. On obtient la foule de *Fall Guys* sans réseau.
-- **Défis** : « sans le chrome », « au plus 10 prises », « jamais plus de 80 % de charge ».
-- **Niveau du jour** : une montée sans fin à graine fixe, la même pour tous (la montée existe : voir le README, « La montée sans fin »). Les briques (barres, œillets, écheveaux, tirettes, fils à linge, filets) se combinent bien, parce que le moteur juge seul de ce qui tient.
+- **Chrono et boutons** ✅ : les boutons sont une monnaie, dépensée sur les poteaux ; le temps de chaque tronçon est comparé au meilleur.
+- **Fantômes** ✅ (son propre meilleur passage, seize points du lacet tous les dixièmes de seconde) : enregistrer les positions des nœuds du lacet (environ 3 Ko/s) et afficher ceux des meilleurs joueurs. Le moteur de tubes en dessine des centaines en un seul appel, sans les simuler. On obtient la foule de *Fall Guys* sans réseau.
+- **Défis** ✅ : un par tronçon (sans tomber, au chrono, en peu de prises, sans qu'une prise passe sous 25 %, sans user le lacet de moitié, l'élan au plus haut, tous les boutons).
+- **Niveau du jour** ✅ (`?daily`, sans classement faute de serveur) : une montée sans fin à graine fixe, la même pour tous (la montée existe : voir le README, « La montée sans fin »). Les briques (barres, œillets, écheveaux, tirettes, fils à linge, filets) se combinent bien, parce que le moteur juge seul de ce qui tient.
 
 ### e. Le multijoueur
 
@@ -121,3 +121,9 @@ Toutes ces extensions sont compatibles avec le comportement actuel (des ajouts, 
 - **Rien au premier plan.** La profondeur de champ ne floute que de quelques pixels : une silhouette nette au premier plan restait un découpage. Des fils dessinés déjà flous (une bande douce, sombre au milieu) se lisaient comme des barres noires, un bug. Le premier plan est vide, et l'image plus lisible.
 - **Une lueur n'est pas une surface.** Les halos et la fumée sont des carrés tournés vers la caméra ; ils écrivaient leur normale dans l'image, et l'occlusion ambiante assombrissait un carré net autour de chaque lampe. Ils n'écrivent plus de normale (`mrtNode`).
 - **Une brume trop large est un voile.** Des taches de brume plus grandes que l'écran blanchissaient tout l'étage : il faut des bancs plus petits que l'écran, aux bords francs, sur un ciel assez soutenu pour qu'ils s'en détachent.
+- **Le jeu demandait beaucoup et donnait peu.** Sept façons de perdre (endurance, choc, usure, raccourci, trempé, ébloui, mordu), aucune de gagner plus que prévu, et des boutons comptés qui ne servaient à rien. Chaque punition a maintenant sa récompense : le rattrapage parfait rend des forces, l'élan (des prises qui s'enchaînent) allège la fatigue et paie, les boutons s'achètent des rustines et des seconds souffles qui rattrapent justement une casse ou une prise qui lâche.
+- **Une mécanique nouvelle toutes les deux sections, c'était trop.** Elles arrivaient au fil des sections, présentées une fois puis tirées au hasard, sans le temps de les maîtriser. Un tronçon est maintenant un étage, qui enseigne ses pièces (seules d'abord, puis souvent) et finit sur un examen : le morceau de bravoure de l'étage, sous son poteau. On retient un étage par ce qu'il demandait.
+- **Un joueur qui ne choisit rien se lasse.** Les variantes de tronçon étaient imposées en silence ; à chaque poteau, le joueur choisit maintenant la trappe au-dessus, normale ou avec sa variante annoncée, qui paie double. Le générateur garde l'état du parcours à chaque poteau pour retirer au sort le tronçon de l'autre façon.
+- **Une promesse jamais tenue démotive.** « Chaque matin un peu plus près », pour toujours : maintenant l'autre lacet attend à l'aube, et le retrouver change le jeu (la paire nouée, deux fois plus longue).
+- **Le décor abstrait peut être varié.** Sans revenir aux objets peints, de grandes pièces d'étoffe cousues sur le mur (ronds, losanges, zigzags, vagues…), une figure par étage, suffisent à reconnaître un étage d'un coup d'œil, et ne se répètent pas plus que l'étoffe elle-même.
+- **Ce qui doit arriver « dans un moment » se compte en images, pas en minuteries.** Dans un onglet en arrière-plan, le navigateur ralentit les minuteries autrement que les images : l'écran de fin arrivait n'importe quand par rapport à ce qui était dessiné. Compté en images dessinées (`Game.later`), il suit le jeu.

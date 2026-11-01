@@ -321,8 +321,8 @@ export class Rules {
   private hazards(dt: number, out: RuleEvent[]): void {
     const { level: L, lace, sim } = this.world, x = sim.x, r = LACE.radius;
     this.bladesRest = Math.max(0, this.bladesRest - dt);
-    L.hazards.forEach((h, k) => {
-      const at: number[] = [];
+    L.hazards.forEach((kind, k) => {
+      const h = { kind: kind.kind, ...this.world.hazardAt(k, this.t) }, at: number[] = [];
       for (let i = lace.start; i < lace.start + lace.count; i++) {
         if (x[3 * i] > h.x0 - r && x[3 * i] < h.x1 + r && x[3 * i + 1] > h.y0 - r && x[3 * i + 1] < h.y1 + r) at.push(i);
       }

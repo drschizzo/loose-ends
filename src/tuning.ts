@@ -36,6 +36,23 @@ export const PLAY = {
    */
   catchSpeed: 1.2,
   catchCost: 0.45,
+  /**
+   * A clean catch, at the top of a swing: the lace moved faster than
+   * perfectAfter (m/s) within the last half second, and slower than
+   * perfectAt as the end takes hold. The hand wins perfectGain of stamina.
+   */
+  perfectAfter: 0.85,
+  perfectAt: 0.5,
+  perfectGain: 0.15,
+  /**
+   * Élan: grips one after the other, each within `flowGap` s of the last,
+   * build it up (a clean catch twice), up to `flowMost`; each level makes
+   * the grips tire `flowEase` less. A fall, a grip torn off or worn out, or
+   * `flowGap` s × 1.5 without a grip, and it is lost.
+   */
+  flowGap: 2.6,
+  flowMost: 5,
+  flowEase: 0.06,
   /** stiffness of a grip (× M/h² of the solver's reference substep) */
   gripK: 4,
   /** how close to a surface an end grabs it (m, from its surface to the lace's): it snaps onto it */

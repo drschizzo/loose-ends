@@ -52,6 +52,12 @@ export interface Cloth {
   colors: [string, string, string];
   pitch: number;
   folds: number;
+  /**
+   * Pieces of another cloth sewn on it, large and abstract (each floor its
+   * own figure, its own colour): round, lozenges, stripes, waves, a draughts
+   * board, rings, zigzags; `scale`: how far apart (m)
+   */
+  patch?: { shape: 'circles' | 'diamonds' | 'stripes' | 'waves' | 'checks' | 'rings' | 'zigzag'; color: string; scale: number };
 }
 
 export interface Theme {
@@ -83,6 +89,9 @@ export interface Theme {
   air: Air;
   /** now and then, a shooting star */
   shooting?: boolean;
+  /** birds crossing the sky, far behind; kites over the sections (how likely one is, each) */
+  birds?: string;
+  kites?: number;
   /** the red thread up the wall: red in the house, light beyond */
   thread: 'red' | 'light' | 'none';
 }
@@ -94,7 +103,7 @@ export const THEMES: Theme[] = [
   // L'entrée: lin écru
   {
     paper: { motif: 'damask', colors: ['#e9dcc3', '#dccbaa', '#c4ab80'] },
-    cloth: { weave: 'plain', colors: ['#cdb894', '#8a7454', '#c0463c'], pitch: 0.008, folds: 0.25 },
+    cloth: { weave: 'plain', colors: ['#cdb894', '#8a7454', '#c0463c'], pitch: 0.008, folds: 0.25, patch: { shape: 'circles', color: '#a8916c', scale: 0.55 } },
     wood: { color: '#7a4e2c', sides: 24 }, plank: '#6b4428', side: '#efe6d6',
     mood: DAY, outside: { top: '#8fbfea', bottom: '#e6f1f8', view: 'garden' }, windows: 0.3,
     lamp: { kind: 'sconce', color: '#ffb46b', power: 1.2, every: 1.6 },
@@ -104,7 +113,7 @@ export const THEMES: Theme[] = [
   // La penderie: feutre lavande
   {
     paper: { motif: 'stripes', colors: ['#e4dde8', '#d6cde0', '#b9aac9'] },
-    cloth: { weave: 'felt', colors: ['#a898c6', '#62557e', '#ecd496'], pitch: 0.01, folds: 0.7 },
+    cloth: { weave: 'felt', colors: ['#a898c6', '#62557e', '#ecd496'], pitch: 0.01, folds: 0.7, patch: { shape: 'diamonds', color: '#8c7cb4', scale: 0.42 } },
     wood: { color: '#c49a62', sides: 24 }, plank: '#9a7448', side: '#ece6ef',
     mood: { bg: '#0d0a08', sky: '#b0a088', ground: '#1e1712', ambient: 0.3, sun: '#8899aa', sunI: 0.7 },
     lamp: { kind: 'bulb', color: '#ffc27a', power: 1.1, every: 1.5 },
@@ -114,7 +123,7 @@ export const THEMES: Theme[] = [
   // La chambre des petits: tricot bleu ciel, une rayure jaune de temps en temps
   {
     paper: { motif: 'stars', colors: ['#dde8ef', '#cfdde7', '#a9c2d4'] },
-    cloth: { weave: 'knit', colors: ['#a8bfd0', '#6a849c', '#f4cf66'], pitch: 0.016, folds: 0.15 },
+    cloth: { weave: 'knit', colors: ['#a8bfd0', '#6a849c', '#f4cf66'], pitch: 0.016, folds: 0.15, patch: { shape: 'checks', color: '#d6b45e', scale: 0.34 } },
     wood: { color: '#d9a441', sides: 6 }, plank: '#b8875a', side: '#eef3f6',
     mood: { bg: '#0b0c14', sky: '#a8b0d8', ground: '#1c1a28', ambient: 0.34, sun: '#8ea6ff', sunI: 0.9 },
     lamp: { kind: 'nightlight', color: '#ffd59a', power: 0.5, every: 1.3 },
@@ -125,7 +134,7 @@ export const THEMES: Theme[] = [
   // L'atelier: sergé bleu pétrole
   {
     paper: { motif: 'flowers', colors: ['#f0e6d6', '#c2525a', '#8aa070'] },
-    cloth: { weave: 'twill', colors: ['#6fa0a6', '#3a6268', '#ecc882'], pitch: 0.008, folds: 0.3 },
+    cloth: { weave: 'twill', colors: ['#6fa0a6', '#3a6268', '#ecc882'], pitch: 0.008, folds: 0.3, patch: { shape: 'zigzag', color: '#4a7d84', scale: 0.4 } },
     wood: { color: '#b98a58', sides: 24 }, plank: '#8f6a44', side: '#f3ece0',
     mood: { bg: '#100c07', sky: '#c8b898', ground: '#241c12', ambient: 0.34, sun: '#9fb0c8', sunI: 0.6 },
     lamp: { kind: 'sconce', color: '#ffd9a0', power: 1.3, every: 1.7 },
@@ -136,7 +145,7 @@ export const THEMES: Theme[] = [
   // La buanderie: coton blanc, des draps
   {
     paper: { motif: 'tiles', colors: ['#eef3f4', '#c8d3d6', '#9ec3cf'] },
-    cloth: { weave: 'plain', colors: ['#b4c4ca', '#748a94', '#5aa0c8'], pitch: 0.005, folds: 0.9 },
+    cloth: { weave: 'plain', colors: ['#b4c4ca', '#748a94', '#5aa0c8'], pitch: 0.005, folds: 0.9, patch: { shape: 'waves', color: '#8eaebc', scale: 0.32 } },
     wood: { color: '#d8b98a', sides: 24 }, plank: '#a89878', side: '#f2f6f7',
     mood: { bg: '#0a0f12', sky: '#a8c0cc', ground: '#18222a', ambient: 0.4, sun: '#c8e4ff', sunI: 0.8 },
     lamp: { kind: 'bulb', color: '#d8eeff', power: 1.2, every: 1.6 },
@@ -147,7 +156,7 @@ export const THEMES: Theme[] = [
   // Le salon: velours vert
   {
     paper: { motif: 'damask', colors: ['#d9dcc4', '#c9cdb0', '#a2a77e'] },
-    cloth: { weave: 'velvet', colors: ['#7aa070', '#3a5434', '#e0b866'], pitch: 0.01, folds: 0.8 },
+    cloth: { weave: 'velvet', colors: ['#7aa070', '#3a5434', '#e0b866'], pitch: 0.01, folds: 0.8, patch: { shape: 'rings', color: '#a8894e', scale: 0.5 } },
     wood: { color: '#8a5a33', sides: 24 }, plank: '#6e4528', side: '#e8e6d6',
     mood: { bg: '#120b06', sky: '#c8a888', ground: '#2a1a10', ambient: 0.32, sun: '#ff9a5a', sunI: 1.0 },
     lamp: { kind: 'sconce', color: '#ffb066', power: 1.2, every: 1.5 },
@@ -158,7 +167,7 @@ export const THEMES: Theme[] = [
   // La chambre: velours rose
   {
     paper: { motif: 'flowers', colors: ['#efe0e4', '#d6a9b6', '#9db08a'] },
-    cloth: { weave: 'velvet', colors: ['#c8a4ac', '#7a5862', '#f4d8c0'], pitch: 0.01, folds: 0.6 },
+    cloth: { weave: 'velvet', colors: ['#c8a4ac', '#7a5862', '#f4d8c0'], pitch: 0.01, folds: 0.6, patch: { shape: 'circles', color: '#a87c88', scale: 0.3 } },
     wood: { color: '#6e4a32', sides: 24 }, plank: '#5a3c28', side: '#f1e6e8',
     mood: { bg: '#100a0d', sky: '#b89aa8', ground: '#22161c', ambient: 0.3, sun: '#ff8f7a', sunI: 0.85 },
     lamp: { kind: 'candle', color: '#ffa850', power: 0.55, every: 1.4 },
@@ -169,7 +178,7 @@ export const THEMES: Theme[] = [
   // Le grenier: toile brute, la lumière des lucarnes
   {
     paper: { motif: 'beams', colors: ['#6b5642', '#5a4736', '#3e3125'] },
-    cloth: { weave: 'plain', colors: ['#c4aa80', '#7a6444', '#e0c48a'], pitch: 0.012, folds: 0.15 },
+    cloth: { weave: 'plain', colors: ['#c4aa80', '#7a6444', '#e0c48a'], pitch: 0.012, folds: 0.15, patch: { shape: 'stripes', color: '#9c8058', scale: 0.6 } },
     wood: { color: '#7d6650', sides: 7 }, plank: '#5e4c3a', side: '#4a3c2e',
     mood: { bg: '#080605', sky: '#a09080', ground: '#16110c', ambient: 0.24, sun: '#ffe2b0', sunI: 1.7, rays: 1.0 },
     outside: { top: '#3a4a80', bottom: '#d88a70', view: 'clouds' }, windows: 0.45, shaft: true,
@@ -183,7 +192,7 @@ export const THEMES: Theme[] = [
     wood: { color: '#8c8270', sides: 24 }, plank: '#6e6658', side: '#86503c',
     mood: { bg: '#0e1428', sky: '#7f92c8', ground: '#22203a', ambient: 0.5, sun: '#ff9f6b', sunI: 1.2, rays: 0.25 },
     backdrop: { top: '#141c3a', bottom: '#d9805a', stars: 40 }, windows: 0,
-    mist: { color: '#e09070', amount: 0.2 }, air: 'sparkles', thread: 'light',
+    mist: { color: '#e09070', amount: 0.2 }, air: 'sparkles', thread: 'light', birds: '#2a2030',
   },
   // La nuit
   {
@@ -199,7 +208,7 @@ export const THEMES: Theme[] = [
     wood: { color: '#b8a07a', sides: 24 }, plank: '#9a8664', side: '#000',
     mood: { bg: '#2a2440', sky: '#ffd6c0', ground: '#6a5a8a', ambient: 1.3, sun: '#ffc48a', sunI: 2.4 },
     backdrop: { top: '#3a3a7a', bottom: '#ffb38a', stars: 60 }, windows: 0,
-    mist: { color: '#ffc8b0', amount: 0.35 }, air: 'sparkles', thread: 'light',
+    mist: { color: '#ffc8b0', amount: 0.35 }, air: 'sparkles', thread: 'light', birds: '#4a3a5a',
   },
   // Les nuages
   {
@@ -207,7 +216,7 @@ export const THEMES: Theme[] = [
     wood: { color: '#b8a07a', sides: 24 }, plank: '#c8b48e', side: '#000',
     mood: { bg: '#6f93c4', sky: '#ffffff', ground: '#9fb4d0', ambient: 1.6, sun: '#fff6e8', sunI: 2.2 },
     backdrop: { top: '#4a7cc8', bottom: '#9cc0e8' }, windows: 0,
-    mist: { color: '#ffffff', amount: 0.45 }, air: 'none', thread: 'none',
+    mist: { color: '#ffffff', amount: 0.45 }, air: 'none', thread: 'none', birds: '#3a4a6a', kites: 0.7,
   },
   // Le grand ciel
   {
@@ -215,7 +224,7 @@ export const THEMES: Theme[] = [
     wood: { color: '#b8a07a', sides: 24 }, plank: '#c8b48e', side: '#000',
     mood: { bg: '#3d78c8', sky: '#eaf4ff', ground: '#7f9cc8', ambient: 1.6, sun: '#ffffff', sunI: 2.4 },
     backdrop: { top: '#2a62c0', bottom: '#9cc8f2' }, windows: 0,
-    mist: { color: '#f4f8ff', amount: 0.3 }, air: 'none', thread: 'none',
+    mist: { color: '#f4f8ff', amount: 0.3 }, air: 'none', thread: 'none', birds: '#2a3a5a', kites: 0.9,
   },
   // Les étoiles
   {
@@ -231,7 +240,7 @@ export const THEMES: Theme[] = [
     wood: { color: '#b8a07a', sides: 24 }, plank: '#c8b48e', side: '#000',
     mood: { bg: '#c89a8a', sky: '#fff0dc', ground: '#c89a8a', ambient: 1.4, sun: '#ffd9a8', sunI: 2.3 },
     backdrop: { top: '#8fb0e0', bottom: '#ffd4b0' }, windows: 0,
-    mist: { color: '#fff0e0', amount: 0.35 }, air: 'petals', thread: 'none',
+    mist: { color: '#fff0e0', amount: 0.35 }, air: 'petals', thread: 'none', birds: '#5a4040', kites: 0.5,
   },
 ];
 

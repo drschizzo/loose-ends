@@ -81,6 +81,53 @@ function clockFace(): THREE.MeshStandardMaterial {
   return (face = new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
 }
 
+/**
+ * The end of each bar, facing us: what tells at a glance what can be
+ * gripped. Wood, rubber and gold show a bright face (the end grain, the red,
+ * the gold) that glows a little even in the dark; chrome a cold dark one,
+ * crossed out, that never glows.
+ */
+const CAP = new THREE.CircleGeometry(1, 28);
+const caps = new Map<string, THREE.MeshStandardMaterial>();
+function capOf(mat: Mat, color: string): THREE.MeshStandardMaterial {
+  const key = `${mat} ${color}`;
+  let m = caps.get(key);
+  if (m) return m;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d')!, base = new THREE.Color(color);
+  if (mat === 'chrome') {
+    g.fillStyle = '#5c646e'; g.beginPath(); g.arc(32, 32, 31, 0, 7); g.fill();
+    g.strokeStyle = '#1c2026'; g.lineWidth = 7; g.beginPath(); g.moveTo(16, 16); g.lineTo(48, 48); g.moveTo(48, 16); g.lineTo(16, 48); g.stroke();
+  } else {
+    // end grain: rings round a heart, the rim darker
+    const pale = base.clone().lerp(new THREE.Color('#fff4dc'), mat === 'wood' ? 0.45 : 0.25).getStyle();
+    g.fillStyle = pale; g.beginPath(); g.arc(32, 32, 31, 0, 7); g.fill();
+    g.strokeStyle = base.clone().multiplyScalar(0.7).getStyle(); g.lineWidth = 2;
+    for (const r of mat === 'wood' ? [8, 15, 22] : [18]) { g.beginPath(); g.arc(32, 32, r, 0, 7); g.stroke(); }
+    g.lineWidth = 5; g.strokeStyle = base.clone().multiplyScalar(0.55).getStyle(); g.beginPath(); g.arc(32, 32, 28.5, 0, 7); g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, emissive: mat === 'chrome' ? '#000000' : '#ffffff', emissiveMap: mat === 'chrome' ? null : t, emissiveIntensity: mat === 'gold' ? 0.5 : 0.28 });
+  caps.set(key, m);
+  return m;
+}
+/** in the sky, a bar hangs from two ropes that fade out above it, like a swing */
+const ROPE_UP = new THREE.PlaneGeometry(0.004, 0.7).translate(0, 0.35, 0);
+const ROPE = (() => {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 64;
+  const g = c.getContext('2d')!, gr = g.createLinearGradient(0, 0, 0, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(255,255,255,1)');
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 64);
+  return new THREE.MeshStandardMaterial({ color: '#e8dcc4', alphaMap: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, roughness: 0.9 });
+})();
+/** a trapdoor's hinges, its ring of a handle, the slit of light under it */
+const HINGE = new THREE.CylinderGeometry(0.009, 0.009, 0.03, 12).rotateZ(Math.PI / 2);
+const HANDLE_RING = new THREE.TorusGeometry(0.014, 0.0035, 8, 20);
+const SLIT = new THREE.PlaneGeometry(1, 0.004);
+const IRON = new THREE.MeshStandardMaterial({ color: '#2e2a26', metalness: 0.7, roughness: 0.45 });
+
 /** the marks that tie a trapdoor to its key */
 const MARK = new THREE.CircleGeometry(0.014, 20);
 const MARKS = ['#2fd3c4', '#e04fd3', '#f2e14e', '#7a6cff'].map((c) => new THREE.MeshBasicMaterial({ color: c }));
@@ -99,7 +146,9 @@ export class Scenery {
   /** the mesh of each bar (those that move are moved) */
   private bars: THREE.Mesh[] = [];
   /** what harms the lace, and what moves of it (a blade's two halves, a flame) */
-  private hazards: { kind: string; parts: THREE.Mesh[] }[] = [];
+  private hazards: { kind: string; parts: THREE.Mesh[]; all: THREE.Mesh[]; at: { x: number; y: number } }[] = [];
+  /** each trapdoor's hinges and handle, its slit of light: they go as it opens */
+  private gateBits: { bits: THREE.Object3D[]; slit: THREE.Mesh }[] = [];
   readonly buttons: THREE.Group[] = [];
   readonly rings: THREE.Mesh[] = [];
   readonly gates: THREE.Mesh[] = [];
@@ -108,7 +157,7 @@ export class Scenery {
   readonly decor: Decor;
   /** what moves of the new things: the spools, the clock hands, the lamps' heads and beams, the weights and handles of the lifts, the draughts, the spider */
   private spools: THREE.Group[] = [];
-  private hands: THREE.Mesh[] = [];
+  private hands: THREE.Mesh[][] = [];
   private searchHeads: { head: THREE.Group; beam: THREE.Mesh }[] = [];
   private lifts: { weight: THREE.Mesh; handle: THREE.Mesh; cords: THREE.Mesh[] }[] = [];
   private draughts: { wind: number; streaks: THREE.Mesh[] }[] = [];
@@ -136,6 +185,21 @@ export class Scenery {
       m.rotation.x = Math.PI / 2;
       m.position.set(b.x, b.y, 0);
       this.bars.push(m);
+      // its end, facing us: what tells it can be gripped (see CAP)
+      const cap = new THREE.Mesh(CAP, capOf(b.mat, w?.color ?? MATS[b.mat].color));
+      cap.rotation.x = -Math.PI / 2;
+      cap.position.y = ROOM.z + 0.0205;
+      cap.scale.setScalar(b.r * 0.94);
+      m.add(cap);
+      // in the sky, nothing holds it up but two ropes from above
+      if (skin(b.y).paper.motif === 'none' && b.mat !== 'gold') {
+        for (const z of [-ROOM.z + 0.005, ROOM.z + 0.01]) {
+          const rope = new THREE.Mesh(ROPE_UP, ROPE);
+          rope.rotation.x = -Math.PI / 2;
+          rope.position.set(0, z, -b.r);
+          m.add(rope);
+        }
+      }
       if (b.mat !== 'gold') return;
       this.posts.set(k, m);
       const flag = add(new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 3), FLAG), false);
@@ -143,11 +207,23 @@ export class Scenery {
       flag.rotation.z = -Math.PI / 2;
     });
     for (const s of L.shelves) add(new THREE.Mesh(new THREE.BoxGeometry(s.x1 - s.x0, 0.03, 2 * ROOM.z + 0.04), (s.mat ?? 'wood') === 'wood' ? wood(skin(s.y).plank) : MAT[s.mat!])).position.set((s.x0 + s.x1) / 2, s.y - 0.015, 0);
-    for (const g of L.gates) {
-      const m = add(new THREE.Mesh(new THREE.BoxGeometry(g.x1 - g.x0, g.y1 - g.y0, 2 * ROOM.z + 0.04), new THREE.MeshStandardMaterial({ color: MATS.gate.color, metalness: 0.3, roughness: 0.5 })));
-      m.position.set((g.x0 + g.x1) / 2, (g.y0 + g.y1) / 2, 0);
+    L.gates.forEach((g, k) => {
+      // a trapdoor wears the colour of what opens it, hinged on one side, a ring to lift it by, light showing through its slit
+      const mark = MARKS[k % MARKS.length].color, cx = (g.x0 + g.x1) / 2;
+      const m = add(new THREE.Mesh(new THREE.BoxGeometry(g.x1 - g.x0, g.y1 - g.y0, 2 * ROOM.z + 0.04), new THREE.MeshStandardMaterial({ color: new THREE.Color(MATS.gate.color).lerp(mark, 0.45), metalness: 0.25, roughness: 0.55 })));
+      m.position.set(cx, (g.y0 + g.y1) / 2, 0);
       this.gates.push(m);
-    }
+      const bits: THREE.Object3D[] = [];
+      for (const z of [-0.06, 0.06]) { const h = add(new THREE.Mesh(HINGE, IRON)); h.position.set(g.x0 + 0.02, g.y1 + 0.004, z); bits.push(h); }
+      const ring = add(new THREE.Mesh(HANDLE_RING, IRON));
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(g.x1 - 0.035, g.y1 + 0.004, ROOM.z - 0.02);
+      bits.push(ring);
+      const slit = add(new THREE.Mesh(SLIT, new THREE.MeshBasicMaterial({ color: mark.clone().multiplyScalar(2.5), transparent: true, depthWrite: false })), false);
+      slit.scale.x = g.x1 - g.x0 - 0.01;
+      slit.position.set(cx, g.y0 - 0.002, ROOM.z + 0.025);
+      this.gateBits.push({ bits, slit });
+    });
     const ring = (g: Ring, tube: number, emissive: string) => {
       const m = add(new THREE.Mesh(new THREE.TorusGeometry(g.r, tube, 12, 40), new THREE.MeshStandardMaterial({ color: '#c7ccd2', metalness: 1, roughness: 0.25, emissive, emissiveIntensity: 0.4 })));
       // a torus lies in its xy plane, its axis along z: turn z onto the ring's axis
@@ -163,7 +239,7 @@ export class Scenery {
     }
 
     for (const h of L.hazards) {
-      const w = h.x1 - h.x0, ht = h.y1 - h.y0, cx = (h.x0 + h.x1) / 2, cy = (h.y0 + h.y1) / 2, parts: THREE.Mesh[] = [];
+      const w = h.x1 - h.x0, ht = h.y1 - h.y0, cx = (h.x0 + h.x1) / 2, cy = (h.y0 + h.y1) / 2, parts: THREE.Mesh[] = [], before = this.group.children.length;
       if (h.kind === 'blade') {
         // the two blades of a pair of scissors, crossed, opening and shutting
         for (const s of [-1, 1]) {
@@ -177,7 +253,7 @@ export class Scenery {
         m.position.set(cx, cy, 0);
         parts.push(m);
       } else add(new THREE.Mesh(new THREE.BoxGeometry(w, ht, 2 * ROOM.z), WATER), false).position.set(cx, cy, 0);
-      this.hazards.push({ kind: h.kind, parts });
+      this.hazards.push({ kind: h.kind, parts, all: this.group.children.slice(before) as THREE.Mesh[], at: { x: cx, y: cy } });
     }
     // smoke over the flames (and over the decor's candles)
     this.decor.smokeFrom(L.hazards.filter((h) => h.kind === 'flame').map((h) => ({ x: (h.x0 + h.x1) / 2, y: h.y1 })));
@@ -247,13 +323,22 @@ export class Scenery {
       this.spools.push(spool);
     }
     for (const c of L.clocks) {
-      const face = add(new THREE.Mesh(new THREE.CircleGeometry(c.length + 0.05, 48), clockFace()), false);
-      face.position.set(c.x, c.y, -ROOM.z + 0.002);
-      face.receiveShadow = true;
-      const hand = add(new THREE.Mesh(new THREE.BoxGeometry(2 * HAND.r, c.length, HAND.z[2] - HAND.z[0] + 2 * HAND.r), MAT.brass));
-      hand.geometry.translate(0, c.length / 2, 0);
-      hand.position.set(c.x, c.y, 0);
-      this.hands.push(hand);
+      const arms = c.arms ?? 1;
+      // a clock has its face; a wheel of blades (a fan), only its hub
+      if (arms === 1) {
+        const face = add(new THREE.Mesh(new THREE.CircleGeometry(c.length + 0.05, 48), clockFace()), false);
+        face.position.set(c.x, c.y, -ROOM.z + 0.002);
+        face.receiveShadow = true;
+      }
+      const hands: THREE.Mesh[] = [];
+      for (let j = 0; j < arms; j++) {
+        const hand = add(new THREE.Mesh(new THREE.BoxGeometry(2 * HAND.r, c.length, HAND.z[2] - HAND.z[0] + 2 * HAND.r), MAT.brass));
+        hand.geometry.translate(0, c.length / 2, 0);
+        hand.position.set(c.x, c.y, 0);
+        hand.userData.arm = (2 * Math.PI * j) / arms;
+        hands.push(hand);
+      }
+      this.hands.push(hands);
       add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 16).rotateX(Math.PI / 2), MAT.brass)).position.set(c.x, c.y, 0);
     }
     for (const q of L.searches) {
@@ -310,7 +395,7 @@ export class Scenery {
   private moveThings(rules: Rules, world: World, now: number): void {
     const L = world.level;
     this.spools.forEach((g, k) => { const z = L.zips[k], len = Math.hypot(z.x1 - z.x0, z.y1 - z.y0), p = spoolAt(z, world.spools[k].d / len); g.position.set(p.x, p.y, 0); g.children[0].rotation.y = world.spools[k].d / SPOOL.r; });
-    this.hands.forEach((m, k) => { m.rotation.z = -world.hands[k]; });
+    this.hands.forEach((arms, k) => { for (const m of arms) m.rotation.z = -world.hands[k] - m.userData.arm; });
     this.searchHeads.forEach(({ head, beam }, k) => {
       head.rotation.z = rules.beams[k] ?? 0;
       (beam.material as THREE.Material).userData.strength.value = 0.07 + 0.05 * rules.dazzle;
@@ -352,15 +437,21 @@ export class Scenery {
   update(rules: Rules, world: World, t: number, dt: number): void {
     const now = performance.now() / 1000;
     for (const m of world.level.movers) { const p = world.barAt(m.bar, t); this.bars[m.bar].position.set(p.x, p.y, 0); }
-    for (const h of this.hazards) {
+    this.hazards.forEach((h, k) => {
+      const box = world.hazardAt(k, t), dx = (box.x0 + box.x1) / 2 - h.at.x, dy = (box.y0 + box.y1) / 2 - h.at.y;
+      if (dx || dy) { for (const m of h.all) m.position.set(m.userData.x ??= m.position.x, m.userData.y ??= m.position.y, m.position.z).add(new THREE.Vector3(dx, dy, 0)); }
       if (h.kind === 'blade') h.parts.forEach((m) => (m.rotation.z = m.userData.tilt * (0.6 + 0.4 * Math.abs(Math.sin(now * 4)))));
       else if (h.kind === 'flame') h.parts[0].scale.set(1, 0.85 + 0.25 * Math.abs(Math.sin(now * 13) * Math.sin(now * 7)), 1);
-    }
+    });
     this.rings.forEach((m, k) => (m.material as THREE.MeshStandardMaterial).emissive.set(rules.threaded[k] ? '#2fbf5a' : '#000000'));
     this.gates.forEach((m, k) => {
       const lit = rules.progress(k), mat = m.material as THREE.MeshStandardMaterial;
-      mat.emissive.setRGB(0.1 * lit, 0.35 * lit, 0.12 * lit);
+      mat.emissive.copy(MARKS[k % MARKS.length].color).multiplyScalar(0.12 + 0.5 * lit);
       m.scale.x = Math.max(0.001, Math.min(1, m.scale.x + (rules.isOpen(k) ? -dt * 1.5 : dt * 3)));
+      const { bits, slit } = this.gateBits[k], shut = m.scale.x > 0.5;
+      for (const b of bits) b.visible = shut;
+      slit.visible = shut;
+      (slit.material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.65 * lit * (0.75 + 0.25 * Math.sin(now * 6));
     });
     this.pulls.forEach((m, k) => (m.material as THREE.MeshStandardMaterial).emissive.set(rules.pulled[k] >= PLAY.pullTime ? '#f2c14e' : rules.pulled[k] > 0 ? '#6a4a00' : '#000000'));
     this.posts.forEach((m, k) => (m.material as THREE.MeshStandardMaterial).emissive.set(rules.isSaved(k) ? '#6a4a00' : '#000000'));
@@ -375,8 +466,8 @@ export class Scenery {
   dispose(): void {
     this.group.removeFromParent();
     this.decor.dispose();
-    const shared = new Set<THREE.Material>([...Object.values(MAT), FLOOR, FLAG, HOOK, PIN, HOLE, BLADE, FLAME, WATER, ...MARKS, ...woods.values(), BEAM_BULB, BEAM_CONE, LEAD, LIFT_ROPE, RADIATOR, VENT, SILK, ...(face ? [face] : [])]);
-    const kept = new Set<THREE.BufferGeometry>([HOOK_SHAFT, HOOK_TIP, HOOK_PLATE, SPOOL_CORE, SPOOL_FLANGE, SEARCH_SHADE, LIFT_WEIGHT, LIFT_HANDLE, LIFT_CORD, RADIATOR_FIN, STREAK_UP, STREAK_ACROSS, PLANE_1]);
+    const shared = new Set<THREE.Material>([...Object.values(MAT), FLOOR, FLAG, HOOK, PIN, HOLE, BLADE, FLAME, WATER, ...MARKS, ...woods.values(), BEAM_BULB, BEAM_CONE, LEAD, LIFT_ROPE, RADIATOR, VENT, SILK, ...(face ? [face] : []), ...caps.values(), ROPE, IRON]);
+    const kept = new Set<THREE.BufferGeometry>([HOOK_SHAFT, HOOK_TIP, HOOK_PLATE, SPOOL_CORE, SPOOL_FLANGE, SEARCH_SHADE, LIFT_WEIGHT, LIFT_HANDLE, LIFT_CORD, RADIATOR_FIN, STREAK_UP, STREAK_ACROSS, PLANE_1, CAP, ROPE_UP, HINGE, HANDLE_RING, SLIT]);
     this.group.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       if (o.geometry !== MARK && !kept.has(o.geometry) && !keeps(o.geometry)) o.geometry.dispose();

@@ -11,7 +11,7 @@ import { MATS, ROOM, type Clock, type Level, type Lift, type Mat, type Ring, typ
  * belongs to (or −1), or the part that moves it (the spool of zip line k,
  * a stretch of the hand of clock k)
  */
-export interface Surface { shape: StaticShape; mat: Mat; bar: number; gate: number; ring: number; moves?: { kind: 'spool' | 'hand' | 'handle'; k: number } }
+export interface Surface { shape: StaticShape; mat: Mat; bar: number; gate: number; ring: number; moves?: { kind: 'spool' | 'hand' | 'handle'; k: number; arm?: number } }
 
 /** the spool of a zip line: its radius, how far below the wire it hangs */
 export const SPOOL = { r: 0.02, below: 0.035 };
@@ -35,8 +35,11 @@ export function handleAt(L: Level, l: Lift, d: number): { x: number; y: number }
   return { x: b.x + l.side * (b.r + 0.004), y: b.y - l.drop + d };
 }
 
-/** the tip of the hand of clock c at angle a (rad, from straight up, clockwise) */
-export const handTip = (c: Clock, a: number): [number, number] => [c.x + c.length * Math.sin(a), c.y + c.length * Math.cos(a)];
+/** the tip of the hand of clock c at angle a (rad, from straight up, clockwise); arm j of its arms, evenly round */
+export const handTip = (c: Clock, a: number, j = 0): [number, number] => {
+  const t = a + (2 * Math.PI * j) / (c.arms ?? 1);
+  return [c.x + c.length * Math.sin(t), c.y + c.length * Math.cos(t)];
+};
 
 /** the axis of a ring, and two directions across it */
 export function ringFrame(g: Ring): { n: THREE.Vector3; u: THREE.Vector3; v: THREE.Vector3 } {
@@ -93,8 +96,10 @@ export function surfaces(L: Level): Surface[] {
     capsule(p.x, p.y, -0.05, p.x, p.y, 0.05, HANDLE.r, 'wood', { kind: 'handle', k });
   });
   L.clocks.forEach((c, k) => {
-    const [tx, ty] = handTip(c, c.phase);
-    for (const z of HAND.z) capsule(c.x, c.y, z, tx, ty, z, HAND.r, 'brass', { kind: 'hand', k });
+    for (let j = 0; j < (c.arms ?? 1); j++) {
+      const [tx, ty] = handTip(c, c.phase, j);
+      for (const z of HAND.z) capsule(c.x, c.y, z, tx, ty, z, HAND.r, 'brass', { kind: 'hand', k, arm: j });
+    }
   });
   return out;
 }

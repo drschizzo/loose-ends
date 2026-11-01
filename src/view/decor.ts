@@ -167,6 +167,31 @@ function weave(c: Cloth, q: ShaderNode): { h: ShaderNode; id: ShaderNode } {
 }
 
 /**
+ * The pieces of another cloth sewn onto a wall at q (m): how far inside the
+ * nearest one q is (m; negative, outside). Large abstract figures, a few
+ * on a wall's width, each floor its own.
+ */
+function patchOf(pt: NonNullable<Cloth['patch']>, q: ShaderNode): ShaderNode {
+  const S = pt.scale, c = q.div(S), TAU = 2 * Math.PI;
+  // a grid whose rows are offset by half a cell, and the point in its cell (−0.5 to 0.5)
+  const cell = () => vec2(fract(c.x.add(floor(c.y).mul(0.5))).sub(0.5), fract(c.y).sub(0.5));
+  // each piece its own size, cut by hand
+  const size = hash2(vec2(floor(c.x.add(floor(c.y).mul(0.5))), floor(c.y))).mul(0.45).add(0.65);
+  switch (pt.shape) {
+    case 'circles': return float(0.27).mul(size).sub(cell().length()).mul(S);
+    case 'rings': return float(0.075).sub(cell().length().sub(float(0.27).mul(size)).abs()).mul(S);
+    case 'diamonds': { const k = cell(); return float(0.3).mul(size).sub(k.x.abs().add(k.y.abs())).mul(S); }
+    case 'checks': {
+      const k = vec2(fract(c.x).sub(0.5), fract(c.y).sub(0.5)), odd = floor(c.x).add(floor(c.y)).mod(2);
+      return select(odd.lessThan(0.5), float(0.42).sub(max(k.x.abs(), k.y.abs())), float(-0.1)).mul(S);
+    }
+    case 'stripes': return float(0.15).sub(fract(c.x.add(c.y).mul(0.7)).sub(0.5).abs()).mul(S);
+    case 'waves': return float(0.12).sub(fract(c.y.add(sin(c.x.mul(TAU)).mul(0.18))).sub(0.5).abs()).mul(S);
+    case 'zigzag': return float(0.13).sub(fract(c.y.add(fract(c.x).sub(0.5).abs().mul(0.9))).sub(0.5).abs()).mul(S);
+  }
+}
+
+/**
  * A wall of cloth: woven, its threads in relief under the
  * grazing light of the lamps, each thread a little lighter or darker than the
  * next and now and then one of another colour (knit: a stripe); hung in
@@ -194,7 +219,9 @@ function cloth(level: number, c: Cloth): THREE.Material {
       return sin(q.x.mul((2 * Math.PI) / 0.16).add(n.mul(5))).mul(0.6).add(sin(q.x.mul((2 * Math.PI) / 0.41).add(n.mul(3)).add(1.3)).mul(0.4)).mul(draught).mul(FOLD * c.folds);
     };
     const depth = threads ? c.pitch * 0.18 : 0.0005;
-    const height = (q: ShaderNode) => folds(q).add(weave(c, q).h.mul(depth).mul(fine));
+    // a piece sewn on stands a little proud of the cloth (its edge soft over a millimetre)
+    const sewn = (q: ShaderNode) => (c.patch ? smoothstep(-0.001, 0.001, patchOf(c.patch, q)) : float(0));
+    const height = (q: ShaderNode) => folds(q).add(weave(c, q).h.mul(depth).mul(fine)).add(sewn(q).mul(0.0012));
     // the slope of the cloth, from its height a fraction of a millimetre away
     const e = 0.0006, h0 = height(p);
     const slope = vec2(height(p.add(vec2(e, 0))).sub(h0), height(p.add(vec2(0, e))).sub(h0)).div(e);
@@ -210,6 +237,15 @@ function cloth(level: number, c: Cloth): THREE.Material {
       : hash2(vec2(w.id, 11.3)).greaterThan(0.985);
     if (threads) col = select(other, mix(col, accent, 0.7).mul(w.h.mul(0.5).add(0.5)), col);
     col = mix(mix(shade, main, 0.75), col, fine);
+    if (c.patch) {
+      // the piece sewn on: its own colour (the same weave showing through), a row of stitches just inside its edge, a shadow just outside it
+      const inside = patchOf(c.patch, p), on = smoothstep(-0.001, 0.001, inside);
+      const piece = color(c.patch.color).mul(w.h.mul(0.22).add(0.78));
+      col = mix(col, piece, on.mul(0.8));
+      const line = smoothstep(0.0016, 0.0006, inside.sub(0.0045).abs()), dash = step(0.45, fract(p.x.add(p.y).mul(70)));
+      col = mix(col, accent.mul(0.85), line.mul(dash).mul(0.75));
+      col = col.mul(float(1).sub(smoothstep(-0.007, 0, inside).mul(float(1).sub(on)).mul(0.3)));
+    }
     // darker in the hollows of the folds, and in broad patches (dyed unevenly, faded)
     if (c.folds) col = col.mul(smoothstep(-1, 1, folds(p).div(FOLD * c.folds)).mul(0.3).add(0.7));
     col = col.mul(mx_fractal_noise_float(vec3(p.mul(c.weave === 'felt' ? 6 : 2.2), 1.7), 2, 2, 0.5, 1).mul(0.1).add(1));
@@ -258,11 +294,24 @@ const AIRS: Record<Air, { tex: THREE.Texture; color: string; size: number; opaci
   dust: { tex: DOT, color: '#fff0d0', size: 0.012, opacity: 0.55, add: true, vy: 0.004, sway: 0.01, share: 1 },
   lint: { tex: DOT, color: '#f4ece0', size: 0.016, opacity: 0.6, add: false, vy: -0.025, sway: 0.03, share: 0.7 },
   bubbles: { tex: RING, color: '#e8f6ff', size: 0.03, opacity: 0.55, add: false, vy: 0.05, sway: 0.02, share: 0.5 },
-  sparkles: { tex: DOT, color: '#ffe6a8', size: 0.016, opacity: 0.8, add: true, vy: 0.006, sway: 0.006, share: 0.8 },
+  sparkles: { tex: DOT, color: '#ffe6a8', size: 0.009, opacity: 0.8, add: true, vy: 0.006, sway: 0.006, share: 0.6 },
   petals: { tex: DOT, color: '#f6b8c4', size: 0.018, opacity: 0.8, add: false, vy: -0.05, sway: 0.06, share: 0.6 },
   none: { tex: DOT, color: '#ffffff', size: 0.01, opacity: 0, add: true, vy: 0, sway: 0, share: 0 },
 };
 const MOTES = 180;
+
+/** a bird far off: two wings, flapping; a kite: a lozenge of cloth on two sticks, its tail of bows, its string */
+const WING = new THREE.BoxGeometry(0.04, 0.0045, 0.002).translate(0.02, 0, 0);
+const KITE_COLORS = ['#e35d6a', '#f2c14e', '#4f8fe0', '#5fbf7a', '#a06ad8', '#ff8a3d'];
+const STRING = (() => {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 64;
+  const g = c.getContext('2d')!, gr = g.createLinearGradient(0, 0, 0, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 64);
+  return new THREE.CanvasTexture(c);
+})();
+kept.add(WING);
+const BIRDS = 9;
 
 export class Decor {
   readonly bands: Band[] = [];
@@ -282,6 +331,8 @@ export class Decor {
   private motes = new Float32Array(MOTES * 3);
   private moteAt = new THREE.InstancedBufferAttribute(this.motes, 3);
   private moteSeed = Float32Array.from({ length: MOTES }, () => Math.random());
+  /** the flock crossing the sky: each bird's wings, where it is in its crossing */
+  private birds: { g: THREE.Group; l: THREE.Mesh; r: THREE.Mesh; x: number; y: number; speed: number; phase: number }[] = [];
   private light: Light = { bg: new THREE.Color(), sky: new THREE.Color(), ground: new THREE.Color(), ambient: 1, sun: new THREE.Color(), sunI: 1, rays: 0, shade: 1, front: 0 };
 
   /** the decor of `storeys` (the sections of the window), for course `seed`; the best height reached, marked on the gauge */
@@ -305,6 +356,23 @@ export class Decor {
     this.air = sprites(this.moteAt, new THREE.PointsNodeMaterial({ map: DOT, size: 0.012, transparent: true, depthWrite: false, opacity: 0 }));
     this.group.add(this.air);
     this.own.push(this.air.material as THREE.Material);
+    if (this.bands.some((b) => theme(b.floor).birds)) this.flock(seed);
+  }
+
+  /** a flock of birds far behind, crossing the sky (shown where the floor has them) */
+  private flock(seed: number): void {
+    const r = seeded('birds', seed), mat = shared('bird', () => new THREE.MeshBasicMaterial({ color: '#2a3040', transparent: true }));
+    const lead = { x: -3 + 6 * r(), y: (r() - 0.5) * 0.6 };
+    for (let i = 0; i < BIRDS; i++) {
+      const g = new THREE.Group(), l = new THREE.Mesh(WING, mat), rr = new THREE.Mesh(WING, mat);
+      rr.scale.x = -1;
+      g.add(l, rr);
+      g.scale.setScalar(0.7 + 0.5 * r());
+      this.add(g);
+      // in a loose V behind the first
+      const k = Math.ceil(i / 2) * (i % 2 ? 1 : -1);
+      this.birds.push({ g, l, r: rr, x: lead.x - Math.abs(k) * 0.12 + (r() - 0.5) * 0.05, y: lead.y - Math.abs(k) * 0.06 * Math.sign(k || 1) + Math.abs(k) * 0.03 + (r() - 0.5) * 0.04, speed: 0.22 + 0.02 * r(), phase: r() * 6.28 });
+    }
   }
 
   /** smoke over the candles, and over `flames` too (the tips of the level's): once the level is built */
@@ -372,6 +440,16 @@ export class Decor {
       (this.streak.material as THREE.MeshBasicMaterial).opacity = Math.sin(Math.PI * st);
     }
     this.drift(th.air, now, dt, y);
+    // the flock crosses, round and round, at the height the camera is: only where the floor has birds
+    for (const b of this.birds) {
+      b.g.visible = !!th.birds;
+      if (!th.birds) continue;
+      (b.l.material as THREE.MeshBasicMaterial).color.set(th.birds);
+      const x = ((b.x + b.speed * now + 4) % 8) - 4;
+      b.g.position.set(x * 1.4, y + 0.55 + b.y + 0.03 * Math.sin(now * 0.7 + b.phase), -1.9);
+      const flap = 0.5 * Math.sin(now * 7 + b.phase);
+      b.l.rotation.z = flap; b.r.rotation.z = -flap;
+    }
   }
 
   /** frees what was made for this build alone (the rest the scenery frees with its group) */
@@ -488,7 +566,7 @@ export class Decor {
     // a star twinkles, brighter than white: it glows on an HDR screen and in the bloom
     const glow = sin(clock.mul(fract(ph.mul(3.1)).add(0.8)).add(ph)).mul(0.45).add(0.55);
     m.colorNode = vec4(vec3(1, 0.96, 0.88).mul(STAR_LIGHT), glow.mul(texture(DOT, uv()).a));
-    m.sizeNode = fract(ph.mul(7.3)).mul(14).add(18).mul(float(4).div(positionView.z.negate()));
+    m.sizeNode = fract(ph.mul(7.3)).mul(6).add(6).mul(float(4).div(positionView.z.negate()));
     const p = sprites(at, m);
     p.renderOrder = -1;
     this.add(p);
@@ -605,14 +683,46 @@ export class Decor {
     m.renderOrder = 1;
   }
 
-  /** in the sky, no walls: the moon over the first section of its floor, far behind */
+  /** in the sky, no walls: a kite now and then, its string down out of sight; the moon over the first section of its floor, far behind */
   private sky(s: Storey, th: Theme, r: () => number): void {
+    if (th.kites && r() < th.kites) this.kite(s, r);
     if (!s.first || !th.moon) return;
     const a = art('moon'), m = this.add(new THREE.Mesh(PLANE, picture('moon'))), y = s.bottom + r() * (s.top - s.bottom);
     m.scale.set(a.w * 1.3, a.h * 1.3, 1);
     m.position.set((r() - 0.5) * 4.7, y, -2.4);
     m.renderOrder = -1;
     this.floats.push({ m, y, phase: r() * 6.28, spin: 0 });
+  }
+
+  /** a kite flying far behind the section, swaying: a lozenge on two sticks, a tail of bows, a string */
+  private kite(s: Storey, r: () => number): void {
+    const g = new THREE.Group(), color = KITE_COLORS[Math.floor(r() * KITE_COLORS.length)];
+    const cloth = new THREE.Mesh(PLANE, shared(`kite ${color}`, () => new THREE.MeshStandardMaterial({ color, roughness: 0.8, side: THREE.DoubleSide })));
+    cloth.rotation.z = Math.PI / 4;
+    cloth.scale.set(0.11, 0.11, 1);
+    cloth.position.z = 0.002;
+    const stick = shared('kite stick', () => new THREE.MeshStandardMaterial({ color: '#4a3a2a', roughness: 0.8 }));
+    const across = new THREE.Mesh(PLANE, stick), down = new THREE.Mesh(PLANE, stick);
+    across.scale.set(0.155, 0.004, 1); down.scale.set(0.004, 0.155, 1);
+    across.position.z = down.position.z = 0.003;
+    g.add(cloth, across, down);
+    // its tail: bows along a curve below it, its string down out of sight
+    for (let k = 1; k <= 4; k++) {
+      const bow = new THREE.Mesh(PLANE, shared(`kite ${KITE_COLORS[(KITE_COLORS.indexOf(color) + k) % KITE_COLORS.length]}`, () => new THREE.MeshStandardMaterial({ color: KITE_COLORS[(KITE_COLORS.indexOf(color) + k) % KITE_COLORS.length], roughness: 0.8, side: THREE.DoubleSide })));
+      bow.scale.set(0.03, 0.014, 1);
+      bow.position.set(0.02 * Math.sin(k * 1.3), -0.08 - 0.055 * k, 0);
+      bow.rotation.z = 0.4 * Math.sin(k);
+      g.add(bow);
+    }
+    const string = new THREE.Mesh(PLANE, shared('kite string', () => new THREE.MeshBasicMaterial({ color: '#f4efe6', map: STRING, transparent: true, depthWrite: false })));
+    string.scale.set(0.003, 2.4, 1);
+    string.position.set(0.25, -1.25, -0.01);
+    string.rotation.z = 0.2;
+    g.add(string);
+    const y = s.bottom + (0.3 + 0.5 * r()) * (s.top - s.bottom);
+    g.position.set((r() < 0.5 ? -1 : 1) * (0.7 + 0.6 * r()), y, -1.3 - 0.6 * r());
+    this.add(g);
+    this.floats.push({ m: g, y, phase: r() * 6.28, spin: 0.18 });
   }
 
   /** what drifts in the air around the camera at height y: its kind may change as it climbs */
