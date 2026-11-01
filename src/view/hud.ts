@@ -2,12 +2,14 @@
 // each end, the line of help, the toasts, the title screen.
 
 import type { End, Lace } from '../play/lace';
+import { chosen, clue, LACES, unlocked } from '../play/laces';
 import { PLAY } from '../tuning';
 
 const $ = (id: string) => document.getElementById(id)!;
 
 export class Hud {
   private toastTimer = 0;
+  private cardTimer = 0;
 
   /** the three counters at the top */
   stats(time: string, buttons: string, height: string): void {
@@ -21,6 +23,41 @@ export class Hud {
     $('toast').textContent = text;
     $('toast').classList.add('show');
     this.toastTimer = seconds;
+  }
+
+  /** the floor the lace is on, at the top */
+  storey(name: string): void {
+    $('storey').textContent = name;
+  }
+
+  /** the card of a floor the lace comes into: its name, its line, a few seconds */
+  card(name: string, line: string): void {
+    $('floor').querySelector('h2')!.textContent = name;
+    $('floor').querySelector('p')!.textContent = line;
+    $('floor').classList.add('show');
+    this.cardTimer = 4.5;
+  }
+
+  /** the laces found so far, on the title screen: the one chosen ringed, those not found yet a question */
+  laces(pick: (k: number) => void): void {
+    const row = $('laces'), name = document.createElement('div');
+    row.replaceChildren();
+    if (row.nextElementSibling?.classList.contains('lace-name')) row.nextElementSibling.remove();
+    name.className = 'lace-name';
+    name.textContent = chosen().name;
+    LACES.forEach((l, k) => {
+      const b = document.createElement('button');
+      b.style.setProperty('--c', l.color);
+      b.style.setProperty('--s', l.stripe);
+      b.disabled = !unlocked(l);
+      b.title = unlocked(l) ? l.name : `? (${clue(l)})`;
+      b.classList.toggle('on', l === chosen());
+      b.onmouseenter = () => { name.textContent = b.title; };
+      b.onmouseleave = () => { name.textContent = chosen().name; };
+      b.onclick = () => { pick(k); this.laces(pick); };
+      row.append(b);
+    });
+    row.after(name);
   }
 
   /** the line of help at the top */
@@ -44,6 +81,7 @@ export class Hud {
   /** after a frame of dt seconds: the toast fades when its time is up */
   update(dt: number): void {
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) $('toast').classList.remove('show');
+    if (this.cardTimer > 0 && (this.cardTimer -= dt) <= 0) $('floor').classList.remove('show');
   }
 
   /** the title screen: a new climb, or (if there is one) the climb left last time */

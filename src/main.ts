@@ -13,6 +13,7 @@
 
 import { Game } from './game';
 import { Climb } from './play/climb';
+import { choose } from './play/laces';
 
 // the climb left last time goes on, unless a new one is asked for (?new)
 const query = new URLSearchParams(location.search), asked = query.has('new');
@@ -25,6 +26,7 @@ game.hud.title(
   () => { if (fresh) game.begin(); else location.search = '?new'; },
   fresh ? null : { label: `Continuer (${kept.best.toFixed(0)} m)`, pick: () => game.begin() },
 );
+game.hud.laces((k) => { choose(k); game.relace(); });
 if (asked) {
   // asked for a new climb: it starts at once, and a reload goes on with it
   query.delete('new');
@@ -38,6 +40,7 @@ Object.assign(window, {
     get world() { return game.world; }, get sim() { return game.world.sim; }, get lace() { return game.world.lace; }, get L() { return game.world.level; },
     get state() { return game.state; }, get save() { return game.rules.save; },
     pointer: game.controls.pointer, rules: game.rules, course: climb.course,
+    get pace() { return climb.pace; }, get decor() { return game.decor; },
     begin: () => game.begin(), respawn: () => game.respawn(), warp: (k: number) => game.warp(k),
     hold: (k: number, on: boolean) => game.hold(k, on),
     run: (frames: number) => { for (let f = 0; f < frames; f++) game.tick(); game.draw(0); },

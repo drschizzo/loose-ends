@@ -40,8 +40,8 @@ const vertexMain = /* glsl */ `
 #include <begin_vertex>
   {
     float w = tubeWear;
-    float tuft = step(1.0 - 0.6 * w, ropeHash(floor(vec2(tubeCoord.x / (1.5 * tEnd.w), atan(tubeCoord.z, tubeCoord.y) * 2.0))));
-    transformed += tubeNormal * tEnd.w * (-0.45 * w * w + 0.9 * w * tuft * ropeHash(vec2(tubeCoord.x * 91.0, tubeCoord.y)));
+    float tuft = step(1.0 - 0.7 * w, ropeHash(floor(vec2(tubeCoord.x / (1.5 * tEnd.w), atan(tubeCoord.z, tubeCoord.y) * 2.0))));
+    transformed += tubeNormal * tEnd.w * (-0.6 * w * (1.0 - 0.3 * w) + 1.3 * w * tuft * ropeHash(vec2(tubeCoord.x * 91.0, tubeCoord.y)));
   }`;
 
 const fragmentDecl = /* glsl */ `
@@ -96,7 +96,7 @@ void ropeSurface(float s, float a, float R, float tag) {
   if (vRopeWear > 0.0) {
     vec2 fibre = tag < 1.5 && tag > 0.5 ? vec2(floor(12.0 * (a + s / (9.0 * R))), floor(12.0 * (a - s / (9.0 * R))))
                                         : vec2(floor(18.0 * (a - s / (2.2 * R))), floor(s / (1.2 * R)));
-    float gone = step(ropeHash2(fibre), vRopeWear * 1.15 - 0.1);
+    float gone = step(ropeHash2(fibre), vRopeWear * 1.4 - 0.05);
     // the fuzz of broken fibres round a gap
     float fuzz = ropeHash2(floor(vec2(s / (0.15 * R), a * 80.0)));
     ropeGone = gone;
@@ -126,8 +126,9 @@ export function laceMaterial(stripe = new THREE.Color('#2b2f3a')): THREE.MeshPhy
   ropeH = mix(0.8, ropeH, ropeFine);
   ropeSlope *= ropeFine;
   vec3 ropeBase = vRope.w < 0.5 || vRope.w > 1.5 ? diffuseColor.rgb * (1.0 - ropeTone) : mix(diffuseColor.rgb, ropeStripe, ropeTone);
-  // where fibres are gone, the core shows: duller, greyer, browner as the wear goes deep
-  ropeBase = mix(ropeBase, vec3(0.42, 0.36, 0.3) * (0.6 + 0.4 * ropeH), ropeGone * (0.5 + 0.5 * vRopeWear));
+  // worn, the sheath goes grimy; where fibres are gone, the core shows: dark, browner as the wear goes deep
+  ropeBase *= 1.0 - 0.4 * vRopeWear;
+  ropeBase = mix(ropeBase, vec3(0.16, 0.11, 0.08) * (0.6 + 0.4 * ropeH), ropeGone * (0.75 + 0.25 * vRopeWear));
   diffuseColor.rgb = ropeBase * mix(0.35, 1.0, smoothstep(0.0, 0.9, ropeH));`)
       .replace('#include <roughnessmap_fragment>', /* glsl */ `#include <roughnessmap_fragment>
   roughnessFactor = vRope.w > 1.5 ? 0.35 : mix(0.95, roughnessFactor, ropeH);`)

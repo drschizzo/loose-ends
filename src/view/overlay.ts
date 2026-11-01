@@ -4,7 +4,7 @@
 // burst where an end takes hold. And the lace's glow: the stretch the free
 // end lifts as it reaches (red as it strains the grip it reaches from), a grip
 // green while it rests, an end about to grip, the aglet slipping through the
-// cords.
+// cords, a flash where the lace is hurt and a throb where it is worn deep.
 
 import * as THREE from 'three';
 import type { End } from '../play/lace';
@@ -20,6 +20,7 @@ const GHOST = new THREE.Color(0, 0.3, 0.9);
 const REST = new THREE.Color(0, 0.45, 0.1);
 const CORD = new THREE.Color(0.45, 0.32, 0);
 const NONE = new THREE.Color(0, 0, 0);
+const WORN = new THREE.Color(1.2, 0.08, 0.02);
 
 /** the glow of an effort (× the weight of the lace): green at rest, orange then red as it strains; yellow (−1) on a cord */
 function strain(c: THREE.Color, effort: number): void {
@@ -98,6 +99,9 @@ export class Overlay {
   private aimDot: THREE.Mesh;
   private tint = new THREE.Color();
   private u = new THREE.Vector3();
+  /** the lace's wear at the last frame, and how fresh the hurt of each node is (1 just hurt, fading) */
+  private before = new Float32Array(0);
+  private hurt = new Float32Array(0);
 
   constructor(scene: THREE.Scene) {
     this.aglets = END_COLORS.map((c) => {
@@ -135,8 +139,19 @@ export class Overlay {
 
   draw(world: World, cords: CordsView, playing: boolean, pointer: { x: number; y: number }, showHints: boolean, dt: number): void {
     const { lace, sim } = world, now = performance.now() / 1000, leader = lace.leader(), u = this.u, tint = this.tint;
-    // the aglet slipping through the other cords (still, for a moment after, where it lies in them): it glows blue
-    for (let i = lace.start; i < lace.start + lace.count; i++) cords.tint(i, sim.ghost[i] ? GHOST : NONE);
+    // the aglet slipping through the other cords (still, for a moment after, where it lies in them): it glows blue;
+    // where the lace is hurt it flashes red, and where it is worn deep it throbs red, faster as it nears breaking
+    if (this.before.length !== lace.count) { this.before = Float32Array.from(lace.damage); this.hurt = new Float32Array(lace.count); }
+    for (let k = 0; k < lace.count; k++) {
+      const i = lace.start + k, d = lace.damage[k];
+      this.hurt[k] = Math.max(this.hurt[k] * Math.exp(-dt / 0.25), Math.min(1, (d - this.before[k]) * 25));
+      this.before[k] = d;
+      const worn = d < 0.45 ? 0 : ((d - 0.45) / 0.55) * (0.5 + 0.5 * Math.sin(now * (4 + 10 * d)));
+      const glow = Math.max(this.hurt[k], 0.7 * worn);
+      if (sim.ghost[i]) cords.tint(i, GHOST);
+      else if (glow > 0.01) cords.tint(i, tint.copy(WORN).multiplyScalar(glow));
+      else cords.tint(i, NONE);
+    }
     lace.ends.forEach((e, k) => {
       const p = lace.at(e.node), q = lace.at(e.inward), dir = e.node < e.inward ? 1 : -1;
       const h = !e.grip && playing ? lace.holdFor(e) : null;

@@ -30,5 +30,9 @@ export const sfx = {
   slip: () => tone(500, 0.35, 'sawtooth', 0.04, 0.3),
   button: () => { tone(1320, 0.12, 'sine', 0.06); tone(1760, 0.18, 'sine', 0.05, 1, 0.06); },
   save: () => [523, 659, 784, 1047].forEach((f, k) => tone(f, 0.4, 'triangle', 0.06, 1, k * 0.08)),
+  /** a new floor: a slow chord, soft */
+  floor: () => [262, 330, 392, 523].forEach((f, k) => tone(f, 2.2, 'sine', 0.035, 1, k * 0.18)),
+  /** a memory: a few notes of a music box */
+  memory: () => [1047, 1319, 1568, 1319, 1175, 1047].forEach((f, k) => tone(f, 0.9, 'sine', 0.025, 1, k * 0.32)),
   win: () => [392, 523, 659, 784, 1047, 1319].forEach((f, k) => tone(f, 0.5, 'triangle', 0.07, 1, k * 0.1)),
 };

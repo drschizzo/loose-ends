@@ -47,3 +47,20 @@ canvas { display: block; touch-action: none; }
 
 .hidden { display: none !important; }
 .screen .buttons { display: flex; gap: 12px; }
+
+#storey { font-weight: 600; opacity: 0.75; }
+#storey:empty { display: none; }
+
+/* the card of a floor, as the lace comes into it: a name, a line, then it fades */
+#floor { position: fixed; top: 26%; left: 50%; transform: translate(-50%, 8px); text-align: center; color: var(--paper); pointer-events: none; opacity: 0; transition: opacity 1.6s ease, transform 1.6s ease; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65); }
+#floor.show { opacity: 1; transform: translate(-50%, 0); }
+#floor h2 { margin: 0; font-family: Georgia, 'Iowan Old Style', serif; font-weight: 400; font-size: clamp(30px, 5vw, 52px); letter-spacing: 0.04em; }
+#floor p { margin: 8px 0 0; font-family: Georgia, 'Iowan Old Style', serif; font-style: italic; font-size: clamp(15px, 2vw, 20px); opacity: 0.85; }
+
+/* the laces found, to climb with */
+#laces { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; justify-content: center; }
+#laces button { margin: 0; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 3px solid rgba(255, 248, 236, 0.25); background: var(--c); background-image: repeating-linear-gradient(45deg, transparent 0 6px, var(--s) 6px 8px); font-size: 0; }
+#laces button.on { border-color: var(--paper); }
+#laces button:disabled { background: rgba(255, 248, 236, 0.12); cursor: default; }
+#laces button:disabled::after { content: '?'; font-size: 16px; color: rgba(255, 248, 236, 0.5); }
+#laces + .lace-name { margin-top: 8px; font-size: 14px; opacity: 0.75; min-height: 1.2em; }

@@ -5,6 +5,7 @@ import type { CableInit } from '@drschizzo/avbd-cables';
 import { placeKey, type Level } from '../level/level';
 import { BRAIDED, LAID } from '../view/laceMaterial';
 import { LACE, VINE } from '../tuning';
+import { chosen } from '../play/laces';
 
 /** what a cord is, beyond its nodes: how it looks, what holds it, what it does */
 export interface Cord {
@@ -92,7 +93,7 @@ export function cordsOf(L: Level, lace: ArrayLike<number> | null, seed: number):
     set.cords.push({ tag: LAID, segment: VINE.segment, pinFirst: false, pinLast: false, ...cord });
     return set.defs.length - 1;
   };
-  add(lace ? Array.from(lace) : lyingLace(L), { key: 'lace', color: '#f6f1e7', tag: BRAIDED, segment: LACE.segment },
+  add(lace ? Array.from(lace) : lyingLace(L), { key: 'lace', color: chosen().color, tag: BRAIDED, segment: LACE.segment },
     { radius: LACE.radius, mass: LACE.mass, bend: LACE.bend, endMass: LACE.endMass, boot: true });
 
   for (const h of L.hangs) add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `hang ${placeKey(h.x, h.top)}`, color: '#a8865a', pinFirst: true });

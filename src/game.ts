@@ -3,10 +3,13 @@
 // draws. When the lace saves on a post, the climb's window moves up, and the
 // world is built again around the lace; so it is when the lace, worn through
 // somewhere (blades, flames, rubbing, jolts), breaks there (a post makes it
-// whole and new again).
+// whole and new again). As the lace comes into a floor of the house (or of
+// the sky) for the first time, its card shows; a rare room plays its tune.
 
 import type { Event as LaceEvent, Lace } from './play/lace';
+import { FLOORS } from './gen/floors';
 import { advice } from './play/advice';
+import { chosen, reach } from './play/laces';
 import { Controls } from './play/controls';
 import { Rules, type RuleEvent } from './play/rules';
 import type { Climb } from './play/climb';
@@ -17,6 +20,7 @@ import { sfx, wake } from './sound';
 import { CordsView } from './view/cordsView';
 import { Hud } from './view/hud';
 import { Overlay } from './view/overlay';
+import type { Decor } from './view/decor';
 import { Scenery } from './view/scenery';
 import { Stage } from './view/stage';
 
@@ -37,12 +41,17 @@ export class Game {
   private showHints = true;
   /** seconds the lace has lain against other cords, gripping none */
   private tangled = 0;
+  /** how frayed the lace has been said to be: 0 not, 1 past half worn, 2 nearly through */
+  private frayed = 0;
   private frame = 0;
   /** where the lace was when play began: where it goes back to with no post saved */
   private startPos: Float64Array | null = null;
   private overlay: Overlay;
   private cords!: CordsView;
   private scenery!: Scenery;
+  /** the floor the lace is on (−1: not said yet), the rare rooms it has heard */
+  private floor = -1;
+  private heard = new Set<number>();
 
   constructor(readonly climb: Climb) {
     this.overlay = new Overlay(this.stage.scene);
@@ -76,12 +85,26 @@ export class Game {
 
   get lace(): Lace { return this.world.lace; }
 
+  /** the decor of the world built (for testing) */
+  get decor(): Decor { return this.scenery.decor; }
+
   /** the play begins (the cords have settled while the title showed) */
   begin(): void {
     wake();
     if (this.state === 'title') this.startPos = this.lace.save();
     this.state = 'play';
     this.hud.hideTitle();
+    // the card of the floor it starts on, whether or not it was seen before
+    const f = this.scenery.decor.floorAt(this.lace.centre()[1]);
+    this.hud.card(FLOORS[f].name, FLOORS[f].line);
+  }
+
+  /** the lace chosen on the title screen: the same lace, its new colours */
+  relace(): void {
+    const look = chosen();
+    this.world.cords[0].color = look.color;
+    this.cords.dispose();
+    this.cords = new CordsView(this.stage.scene, this.world);
   }
 
   /** end k's button held or let go (the clock starts with the first grip) */
@@ -117,7 +140,7 @@ export class Game {
     this.world = new World(L, lace, 11 + this.climb.look, previous, wear);
     this.rules.attach(this.world);
     this.cords = new CordsView(this.stage.scene, this.world);
-    this.scenery = new Scenery(this.stage.scene, L, this.climb.look);
+    this.scenery = new Scenery(this.stage.scene, L, this.climb.storeys(L), this.climb.course.seed, this.climb.best);
   }
 
   /** one step of the solver */
@@ -137,8 +160,36 @@ export class Game {
     lace.rub(dt);
     const torn = lace.broken();
     if (torn >= 0) this.broke(torn);
+    else this.fraying();
     // fallen below the world (below the post, on the endless course): back to the post
     if (lace.centre()[1] < this.world.level.bottom - 0.4) { this.respawn(); this.hud.toast('Tombé ! Retour au dernier poteau', 1.8); }
+  }
+
+  /** the floor the lace is in: its name at the top; the first time, its card (and a lace found, now and then); a rare room's tune */
+  private storey(y: number): void {
+    const decor = this.scenery.decor, f = decor.floorAt(y);
+    if (f !== this.floor) {
+      this.floor = f;
+      this.hud.storey(FLOORS[f].name);
+      if (this.climb.reached(f, this.clock)) {
+        this.hud.card(FLOORS[f].name, FLOORS[f].line);
+        sfx.floor();
+        const found = reach(f);
+        if (found) setTimeout(() => this.hud.toast(`Trouvé : ${found.name.toLowerCase()} (à choisir au début)`, 3), 4000);
+      }
+    }
+    const m = decor.memoryAt(y);
+    if (m >= 0 && !this.heard.has(m)) { this.heard.add(m); sfx.memory(); }
+  }
+
+  /** a word when the lace's worst spot wears past half, then past four fifths (once each, until a post makes it new) */
+  private fraying(): void {
+    const worst = this.lace.damage.reduce((m, d) => Math.max(m, d), 0), stage = worst >= 0.8 ? 2 : worst >= 0.5 ? 1 : 0;
+    if (stage > this.frayed) {
+      sfx.slip();
+      this.hud.toast(stage === 2 ? 'Le lacet ne tient plus qu\'à un fil ! Trouve un poteau' : 'Le lacet s\'effiloche : là où il rougit, il cassera', 2);
+    }
+    this.frayed = stage;
   }
 
   /** the lace worn through at node `at` breaks there: the piece an end grips goes on (it lets go), the other falls */
@@ -193,6 +244,9 @@ export class Game {
     this.cords.update();
     this.overlay.draw(this.world, this.cords, playing, p, this.showHints, dt);
     this.scenery.update(this.rules, this.world, this.time, dt);
+    this.scenery.decor.update(performance.now() / 1000, dt, this.stage.y);
+    this.stage.mood(this.scenery.decor.lightAt(this.stage.y));
+    if (playing) this.storey(cy);
     // the camera follows the lace, a little ahead towards the pointer
     this.stage.follow(playing ? cx * 0.8 + p.x * 0.2 : cx, (playing ? cy * 0.8 + p.y * 0.2 : cy) + 0.1, Math.max(0.75, L.bottom + 0.75), L.top - 0.7, dt);
     const taken = this.rules.taken.size, shown = this.climb.shown(cy, this.clock);

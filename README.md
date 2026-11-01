@@ -57,6 +57,33 @@ Quand aucune combinaison ne passe, les règles cèdent une à une, la moins impo
 
 **Le stress de la chute.** Le monde construit est une **fenêtre** du parcours : de la section sous le dernier poteau sauvegardé jusqu'au poteau suivant, dont la trappe reste fermée tant qu'on ne s'y est pas sauvegardé. Tout ce qui sépare le lacet du dernier poteau est là : une chute est une vraie chute, on peut se rattraper en route. Tomber sous le poteau ramène au poteau. À chaque sauvegarde, la fenêtre monte, et le monde est reconstruit autour du lacet, les cordes déjà posées gardant leur place. Mesuré : 1 à 5 ms pour reconstruire, 2 à 3 ms par pas au repos. Juste après, le temps que les cordes nouvelles se posent (une à deux secondes), un pas peut coûter jusqu'à 22 ms quand le tronçon est long.
 
+## Les étages, et ce qu'ils racontent
+
+La montée traverse une maison, puis le ciel. Le lacet est celui d'une paire de chaussures restée près de la porte ; la maison est celle d'un vieux couple, qu'on vide après leur départ. Rien ne le dit, tout le montre : un miroir sous un drap, des cartons « à donner » et « à garder », un calendrier arrêté en mars 2009 (les jours barrés jusqu'au 13, puis plus rien), un tricot qui attend sa dernière rangée, du linge sec depuis longtemps sur son fil, des rectangles plus clairs sur le papier peint là où étaient les cadres, une horloge arrêtée, un lit fait, « Lettres de Jeanne » au grenier. Sur la toise de l'entrée, les enfants ont été mesurés (et Papi, pour rire). Un fil rouge court sur les murs d'étage en étage ; en sortant du grenier il devient lumière, et à l'aube il finit en nœud, sous une étoile. Au-dessus, le ciel ne finit pas.
+
+| Étage | Ce qu'on y voit | Ce qu'il a de plus |
+|---|---|---|
+| L'entrée | les chaussures (l'une sans lacet), le courrier, le miroir voilé, la toise | barres |
+| La penderie | manteaux, cravates, lavande, cartons | rideaux de cordes |
+| La chambre des petits | dessins « pour Papi », ours, fanions | échelles, filets, chicanes |
+| L'atelier | le tricot, le calendrier, les ciseaux, les bobines | écheveaux, œillets, ciseaux |
+| La buanderie | le linge, une chaussette seule, des bulles | fils à linge, cascades |
+| Le salon | l'horloge, les lunettes sur le livre, le fauteuil sous un drap | barres mobiles, bougies, pendules |
+| La chambre | le lit fait, la table de nuit, les pantoufles | fils posés, tirettes |
+| Le grenier | cartons, robe de mariée, cheval à bascule, toiles d'araignée | lianes, filets |
+| Le toit | briques, antenne, la nuit qui tombe | cordes lisses, pendules |
+| **Le ciel** : la nuit, l'aube, puis pour toujours les nuages, le grand ciel, les étoiles, le matin | lune, cerfs-volants, ballons, étoiles filantes, souvenirs de la maison qui flottent | |
+
+Chaque étage a son papier peint, son bois, sa lumière (chaude dans l'entrée, froide dans la buanderie, crépuscule dans la chambre, la nuit au-dessus du toit), ses fenêtres et ce qu'on y voit, ce qui flotte dans l'air (poussière, peluches, bulles, étincelles). Ce qui se prend garde son aspect d'étage en étage : le bois est toujours chaud et mat (un crayon dans la chambre des petits), le chrome toujours froid et brillant, le caoutchouc rouge, les poteaux dorés. Le décor reste sur le mur, plus pâle que ce qui se joue. Il est peint une fois sur des canevas, sans fichier à charger, et ne coûte rien au solveur.
+
+**Quand change-t-on d'étage.** Sur un poteau, donc juste après une sauvegarde : le nouvel étage vient comme une récompense, avec son carton (son nom, une ligne) la première fois. L'étage d'un tronçon suit le temps qu'un bon joueur, sans chute, aurait mis pour y arriver : le parcours l'estime section par section (`STORY.pace` dans [src/tuning.ts](src/tuning.ts) : 22 s, plus 14 s par point d'effort, plus 9 s par mètre). Les neuf étages de la maison se partagent `STORY.skyAfter` (50 min). Sur cinq graines, le ciel arrive après 51 à 59 min estimées, entre 75 et 88 m. **Cette estimation n'a pas été mesurée sur un vrai joueur** : la montée garde l'heure où chaque étage a été atteint (`game.pace` dans la console), pour régler `STORY.pace`.
+
+Rarement (une section sur neuf environ), une pièce garde un **souvenir** : la mer (une carte postale de Biarritz, la fenêtre sur la plage), Noël (la neige à la fenêtre, une guirlande), le bal (un gramophone), le jardin (un chapeau de paille). Quelques notes de boîte à musique quand le lacet y entre.
+
+**Les lacets.** Chaque étage atteint pour la première fois (sur n'importe quelle montée) peut en donner un, à choisir sous l'écran titre : le lacet du dimanche, de randonnée, le fil rouge, le lacet doré, le ruban bleu.
+
+Le parcours est tiré par étage depuis cette version : une montée gardée par une version d'avant ne retrouverait pas son poteau, elle n'est donc pas reprise (clé `loose-ends:climb:2`).
+
 ## Code
 
 Chaque dossier a un rôle, et ne dépend que de ceux d'au-dessus dans ce tableau.
@@ -65,14 +92,14 @@ Chaque dossier a un rôle, et ne dépend que de ceux d'au-dessus dans ce tableau
 |---|---|
 | [src/tuning.ts](src/tuning.ts) | tous les réglages ; ceux de `PLAY` se changent dans l'adresse : `?muscle=2&drain=0.3` |
 | [src/level/](src/level) | ce dont un niveau est fait (`level.ts` : données pures, `merge`, `placeKey`), ses formes statiques (`surfaces.ts`) |
-| [src/gen/](src/gen) | le parcours sans fin : les pièces (`parts.ts`) et leur assemblage (`course.ts`) |
+| [src/gen/](src/gen) | le parcours sans fin : les pièces (`parts.ts`), leur assemblage (`course.ts`), les étages (`floors.ts`) |
 | [src/sim/](src/sim) | le monde physique construit depuis un niveau : la forme des cordes (`cords.ts`), le solveur et le lacet (`world.ts`) |
-| [src/play/](src/play) | le lacet (`lace.ts` : bouts, prises, endurance, aiguillette), les règles du niveau (`rules.ts` : boutons, œillets, trappes, tirettes, poteaux), les commandes, la montée (`climb.ts` : sa fenêtre du parcours, ce qui est gardé d'une visite à l'autre), l'aide (`advice.ts`) |
-| [src/view/](src/view) | la scène et la caméra (`stage.ts`), le décor (`scenery.ts`, volontairement sobre : ses matières sont en tête de fichier, là où un thème les remplacera), les cordes en tubes (`cordsView.ts`), les repères sur le lacet (`overlay.ts`), la page (`hud.ts`) |
+| [src/play/](src/play) | le lacet (`lace.ts` : bouts, prises, endurance, aiguillette), les règles du niveau (`rules.ts` : boutons, œillets, trappes, tirettes, poteaux), les commandes, la montée (`climb.ts` : sa fenêtre du parcours, ce qui est gardé d'une visite à l'autre), les lacets trouvés (`laces.ts`), l'aide (`advice.ts`) |
+| [src/view/](src/view) | la scène, sa lumière et la caméra (`stage.ts`), ce qui se joue du niveau (`scenery.ts`), le décor des étages (`decor.ts`, d'après `themes.ts`, peint par `paint.ts`), les cordes en tubes (`cordsView.ts`), les repères sur le lacet (`overlay.ts`), la page (`hud.ts`) |
 | [src/game.ts](src/game.ts) | la boucle : un pas du solveur, les règles, le dessin ; reconstruit le monde quand la partie le demande |
 | [src/main.ts](src/main.ts) | le démarrage : continuer ou nouvelle montée |
 
-Dans la console, `game` expose la simulation. `game.run(60)` joue une seconde, même onglet caché, `game.pointer` déplace le pointeur, `game.hold(0, true)` maintient le bouton de la tête et `game.course.section(k)` montre une section du parcours sans fin.
+Dans la console, `game` expose la simulation. `game.run(60)` joue une seconde, même onglet caché, `game.pointer` déplace le pointeur, `game.hold(0, true)` maintient le bouton de la tête et `game.course.section(k)` montre une section du parcours sans fin (son étage : `.floor`). `game.warp(k)` y emmène le lacet ; pour que la caméra le suive, placer aussi `game.pointer` sur lui.
 
 **Ce qui bouge et ce qui fait mal.**
 

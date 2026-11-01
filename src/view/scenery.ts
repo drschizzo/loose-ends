@@ -4,22 +4,24 @@
 // in a group of its own, dropped as a whole when the course builds its next
 // window.
 //
-// Plain on purpose: what each element is matters, not yet how it looks. The
-// materials are all at the top, where a theme would swap them.
+// The room itself (its walls, what hangs on them, the sky beyond) is the
+// decor's (decor.ts), floor by floor. The wood of the bars and shelves takes
+// the floor's look; the rest keeps its own, the same on every floor, so that
+// what can be gripped is always told at a glance.
 
 import * as THREE from 'three';
+import type { Storey } from '../gen/course';
 import { MATS, ROOM, type Level, type Mat, type Ring } from '../level/level';
 import { ringFrame } from '../level/surfaces';
 import type { Rules } from '../play/rules';
 import type { World } from '../sim/world';
 import { PLAY } from '../tuning';
+import { Decor, keeps, theme } from './decor';
 
-const PAPERS: [string, string, string][] = [['#efe2cb', '#e6d3b4', '#d9b98a'], ['#dde8ef', '#cfdde7', '#a9c2d4'], ['#efe0e4', '#e6d0d6', '#d6a9b6'], ['#e3efe0', '#d3e6cf', '#a9cfa0'], ['#ece6f2', '#ddd3e8', '#b5a3cf']];
 const BUTTON_COLORS = ['#e35d6a', '#4f8fe0', '#f2c14e', '#5fbf7a', '#a06ad8'];
 
 // shared by every build: only geometries, and the materials that light up, are made per build
 const MAT = Object.fromEntries(Object.entries(MATS).map(([k, m]) => [k, new THREE.MeshStandardMaterial({ color: m.color, metalness: m.metalness, roughness: m.roughness })])) as Record<Mat, THREE.MeshStandardMaterial>;
-const SIDE = new THREE.MeshStandardMaterial({ color: '#f7f2ea', roughness: 0.6 });
 const FLOOR = new THREE.MeshStandardMaterial({ color: '#8a5a33', roughness: 0.8 });
 const FLAG = new THREE.MeshStandardMaterial({ color: '#e2b13c', emissive: '#3a2a00' });
 const HOOK = new THREE.MeshStandardMaterial({ color: '#c9a24a', metalness: 0.8, roughness: 0.35 });
@@ -32,7 +34,13 @@ const WATER = new THREE.MeshBasicMaterial({ color: '#4aa3ff', transparent: true,
 /** the marks that tie a trapdoor to its key */
 const MARK = new THREE.CircleGeometry(0.014, 20);
 const MARKS = ['#2fd3c4', '#e04fd3', '#f2e14e', '#7a6cff'].map((c) => new THREE.MeshBasicMaterial({ color: c }));
-const papers = new Map<number, THREE.MeshStandardMaterial>();
+/** the wood of each floor: its bars, its planks */
+const woods = new Map<string, THREE.MeshStandardMaterial>();
+const wood = (color: string) => {
+  let m = woods.get(color);
+  if (!m) woods.set(color, (m = new THREE.MeshStandardMaterial({ color, metalness: 0, roughness: MATS.wood.roughness })));
+  return m;
+};
 
 export class Scenery {
   readonly group = new THREE.Group();
@@ -47,23 +55,22 @@ export class Scenery {
   readonly gates: THREE.Mesh[] = [];
   /** the switch box of each pull, which lights when it clicks */
   readonly pulls: THREE.Mesh[] = [];
+  readonly decor: Decor;
 
-  constructor(scene: THREE.Scene, L: Level, look: number) {
+  /** the scenery of level L, the window of the course whose sections are `storeys` (course `seed`); `best`: the highest the lace has been */
+  constructor(scene: THREE.Scene, L: Level, storeys: Storey[], seed: number, best: number) {
     const add = <T extends THREE.Object3D>(m: T, shadows = true): T => {
       if (shadows) m.castShadow = m.receiveShadow = true;
       this.group.add(m);
       return m;
     };
-    const height = L.top - L.bottom + 2, mid = (L.top + L.bottom) / 2;
-
-    const wall = add(new THREE.Mesh(new THREE.PlaneGeometry(2 * ROOM.x + 4, height), paper(look)), false);
-    wall.position.set(0, mid, -ROOM.z);
-    wall.receiveShadow = true;
+    this.decor = new Decor(this.group, storeys, seed, L.bottom, L.top, best);
+    const skin = (y: number) => theme(this.decor.floorAt(y));
     if (L.bottom <= 0) add(new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 2), FLOOR)).position.set(0, -0.15, 0.5);
-    for (const s of [-1, 1]) add(new THREE.Mesh(new THREE.BoxGeometry(0.3, height, 2 * ROOM.z + 0.1), SIDE)).position.set(s * (ROOM.x + 0.15), mid, 0);
 
     L.bars.forEach((b, k) => {
-      const m = add(new THREE.Mesh(new THREE.CylinderGeometry(b.r, b.r, 2 * ROOM.z + 0.04, 24), b.mat === 'gold' ? MAT.gold.clone() : MAT[b.mat]));
+      const w = b.mat === 'wood' ? skin(b.y).wood : null;
+      const m = add(new THREE.Mesh(new THREE.CylinderGeometry(b.r, b.r, 2 * ROOM.z + 0.04, w?.sides ?? 24), b.mat === 'gold' ? MAT.gold.clone() : w ? wood(w.color) : MAT[b.mat]));
       m.rotation.x = Math.PI / 2;
       m.position.set(b.x, b.y, 0);
       this.bars.push(m);
@@ -73,7 +80,7 @@ export class Scenery {
       flag.position.set(b.x, b.y + 0.09, -ROOM.z + 0.03);
       flag.rotation.z = -Math.PI / 2;
     });
-    for (const s of L.shelves) add(new THREE.Mesh(new THREE.BoxGeometry(s.x1 - s.x0, 0.03, 2 * ROOM.z + 0.04), MAT[s.mat ?? 'wood'])).position.set((s.x0 + s.x1) / 2, s.y - 0.015, 0);
+    for (const s of L.shelves) add(new THREE.Mesh(new THREE.BoxGeometry(s.x1 - s.x0, 0.03, 2 * ROOM.z + 0.04), (s.mat ?? 'wood') === 'wood' ? wood(skin(s.y).plank) : MAT[s.mat!])).position.set((s.x0 + s.x1) / 2, s.y - 0.015, 0);
     for (const g of L.gates) {
       const m = add(new THREE.Mesh(new THREE.BoxGeometry(g.x1 - g.x0, g.y1 - g.y0, 2 * ROOM.z + 0.04), new THREE.MeshStandardMaterial({ color: MATS.gate.color, metalness: 0.3, roughness: 0.5 })));
       m.position.set((g.x0 + g.x1) / 2, (g.y0 + g.y1) / 2, 0);
@@ -172,42 +179,12 @@ export class Scenery {
   /** takes it out of the scene, and frees what was made for it */
   dispose(): void {
     this.group.removeFromParent();
-    const shared = new Set<THREE.Material>([...Object.values(MAT), SIDE, FLOOR, FLAG, HOOK, PIN, HOLE, BLADE, FLAME, WATER, ...MARKS, ...papers.values()]);
+    this.decor.dispose();
+    const shared = new Set<THREE.Material>([...Object.values(MAT), FLOOR, FLAG, HOOK, PIN, HOLE, BLADE, FLAME, WATER, ...MARKS, ...woods.values()]);
     this.group.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
-      if (o.geometry !== MARK) o.geometry.dispose();
-      if (!shared.has(o.material)) (o.material as THREE.Material).dispose();
+      if (o.geometry !== MARK && !keeps(o.geometry)) o.geometry.dispose();
+      if (!shared.has(o.material) && !keeps(o.material)) (o.material as THREE.Material).dispose();
     });
   }
-}
-
-/** the wallpaper of look k: stripes and little stars, drawn once */
-function paper(look: number): THREE.MeshStandardMaterial {
-  const k = ((look % PAPERS.length) + PAPERS.length) % PAPERS.length;
-  let m = papers.get(k);
-  if (m) return m;
-  const [hue, stripe, star] = PAPERS[k];
-  const c = document.createElement('canvas');
-  c.width = c.height = 256;
-  const g = c.getContext('2d')!;
-  g.fillStyle = hue;
-  g.fillRect(0, 0, 256, 256);
-  g.fillStyle = stripe;
-  for (let x = 0; x < 256; x += 64) g.fillRect(x, 0, 26, 256);
-  g.fillStyle = star;
-  for (const [x, y] of [[45, 40], [109, 150], [173, 70], [237, 200], [45, 230]]) {
-    g.beginPath();
-    for (let q = 0; q < 10; q++) {
-      const r = q % 2 ? 4 : 10, a = (Math.PI * q) / 5 - Math.PI / 2;
-      g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
-    }
-    g.fill();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(6, 24);
-  t.colorSpace = THREE.SRGBColorSpace;
-  m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 });
-  papers.set(k, m);
-  return m;
 }

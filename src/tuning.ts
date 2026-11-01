@@ -73,8 +73,8 @@ export const PLAY = {
    */
   bladeWear: 0.55,
   flameWear: 1.1,
-  rubWear: 0.5,
-  joltWear: 0.25,
+  rubWear: 1.5,
+  joltWear: 0.5,
   /** the lace cannot get shorter than this (m): broken shorter, it goes back to its post */
   shortest: 0.55,
   /** soaked, the lace shrinks by this much and weighs this much more; it dries in dryTime (s) */
@@ -82,6 +82,14 @@ export const PLAY = {
   soak: 0.6,
   dryTime: 8,
 };
+
+/**
+ * How long the house lasts. The course reckons the time a good player takes
+ * (no fall) for each section, `base` + `effort` × its effort (0 to 6) +
+ * `metre` × how high it climbs (s); the floors of the house share
+ * `skyAfter` seconds of it, and the sky comes at the first post after.
+ */
+export const STORY = { skyAfter: 50 * 60, pace: { base: 22, effort: 14, metre: 9 } };
 
 const query = new URLSearchParams(location.search);
 for (const key of Object.keys(PLAY) as (keyof typeof PLAY)[]) {

@@ -1,12 +1,17 @@
 // The renderer, the scene, its light and the camera that follows the lace.
+// The light is the floor's: warm in the hall, cold in the laundry, dusk in
+// the bedroom, night above the roof (see themes.ts).
 
 import * as THREE from 'three';
+import type { Light } from './decor';
 
 export class Stage {
   readonly renderer = new THREE.WebGLRenderer({ antialias: true });
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.05, 30);
   private sun = new THREE.DirectionalLight('#fff1dc', 2.4);
+  private hemi = new THREE.HemisphereLight('#fff4e0', '#5a4636', 1.4);
+  private fog = new THREE.Fog('#2a211b', 3.5, 14);
   private focus = new THREE.Vector3(0, 0.6, 0);
 
   constructor() {
@@ -18,7 +23,8 @@ export class Stage {
     r.toneMapping = THREE.ACESFilmicToneMapping;
     document.body.prepend(r.domElement);
     this.scene.background = new THREE.Color('#2a211b');
-    this.scene.add(new THREE.HemisphereLight('#fff4e0', '#5a4636', 1.4));
+    this.scene.fog = this.fog;
+    this.scene.add(this.hemi);
     const sun = this.sun;
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
@@ -42,6 +48,20 @@ export class Stage {
     this.sun.position.set(f.x + 0.4, f.y + 1.2, 3);
     this.sun.target.position.set(f.x, f.y, 0);
   }
+
+  /** the light of the floor the camera is on */
+  mood(l: Light): void {
+    (this.scene.background as THREE.Color).copy(l.bg);
+    this.fog.color.copy(l.bg);
+    this.hemi.color.copy(l.sky);
+    this.hemi.groundColor.copy(l.ground);
+    this.hemi.intensity = l.ambient;
+    this.sun.color.copy(l.sun);
+    this.sun.intensity = l.sunI;
+  }
+
+  /** the height the camera looks at */
+  get y(): number { return this.focus.y; }
 
   /** the camera there at once (after the lace moved far) */
   jump(x: number, y: number): void {

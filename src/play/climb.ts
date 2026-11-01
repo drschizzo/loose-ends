@@ -1,25 +1,29 @@
 // A climb: the course of a seed, played from post to post for as long as the
 // lace holds, and kept between visits (where the lace was last saved, the
-// best height, the time played).
+// best height, the time played, when each floor was reached: what the pace
+// of the floors is tuned by, see STORY in tuning.ts).
 
-import { Course } from '../gen/course';
+import { Course, type Storey } from '../gen/course';
 import { placeKey, type Level } from '../level/level';
 import type { Save } from './rules';
 
 /** what is kept of a climb between two visits */
-interface Kept { seed: number; section: number; pos: number[]; best: number; time: number }
+interface Kept { seed: number; section: number; pos: number[]; best: number; time: number; floors?: number[] }
 
-const KEY = 'loose-ends:climb';
+// the course is laid out by floors since v2: a climb kept before would not find its post again
+const KEY = 'loose-ends:climb:2';
 
 export class Climb {
   readonly course: Course;
   /** the section whose post the lace last saved on (0: the start) */
   private section = 0;
   private pos: Float64Array | null = null;
-  private best = 0;
+  private highest = 0;
   /** seconds played before this visit, and when it was last kept */
   private before = 0;
   private keptAt = 0;
+  /** the seconds played when each floor was first reached */
+  private floors: number[] = [0];
 
   /** the climb left last time, if any */
   static kept(): Kept | null {
@@ -32,12 +36,32 @@ export class Climb {
     if (kept) {
       this.section = kept.section;
       this.pos = kept.pos.length ? Float64Array.from(kept.pos) : null;
-      this.best = kept.best;
+      this.highest = kept.best;
       this.before = kept.time;
+      this.floors = kept.floors ?? [0];
     }
   }
 
-  /** what tells it from other climbs: the wallpaper, the jitter of its skeins */
+  /** the highest it has been (m) */
+  get best(): number { return this.highest; }
+
+  /** what the decor needs of the sections of level L */
+  storeys(L: Level): Storey[] { return this.course.storeys(L.bottom, L.top); }
+
+  /** floor f reached after `time` seconds of play this visit: whether it is the first time on this climb */
+  reached(f: number, time: number): boolean {
+    if (this.floors[f] != null) return false;
+    this.floors[f] = Math.round(this.before + time);
+    this.keep(time);
+    return true;
+  }
+
+  /** when each floor was reached (min), for tuning the pace */
+  get pace(): string {
+    return this.floors.map((t, f) => (t == null ? '' : `${f}: ${(t / 60).toFixed(1)} min`)).filter(Boolean).join(', ');
+  }
+
+  /** what tells it from other climbs: the jitter of its skeins */
   get look(): number { return 2 + this.course.seed; }
 
   /** the level to build now: the window of the course around the last post */
@@ -68,19 +92,19 @@ export class Climb {
 
   /** the lace at height y after `time` seconds of play this visit: the best height, kept every few seconds of play */
   track(y: number, time: number): void {
-    this.best = Math.max(this.best, y);
+    this.highest = Math.max(this.highest, y);
     if (time - this.keptAt >= 3) this.keep(time);
   }
 
   /** the progress shown at the top */
   shown(y: number, time: number): { time: string; height: string } {
-    return { time: clock(this.before + time), height: `${Math.max(0, y).toFixed(1)} m (max ${this.best.toFixed(0)})` };
+    return { time: clock(this.before + time), height: `${Math.max(0, y).toFixed(1)} m (max ${this.highest.toFixed(0)})` };
   }
 
   /** what is kept for next time, `time` seconds into this visit */
   private keep(time: number): void {
     this.keptAt = time;
-    const kept: Kept = { seed: this.course.seed, section: this.section, pos: this.pos ? Array.from(this.pos) : [], best: this.best, time: this.before + time };
+    const kept: Kept = { seed: this.course.seed, section: this.section, pos: this.pos ? Array.from(this.pos) : [], best: this.highest, time: this.before + time, floors: this.floors };
     try { localStorage.setItem(KEY, JSON.stringify(kept)); } catch { /* private window */ }
   }
 }

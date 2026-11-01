@@ -15,7 +15,10 @@
 //     a hard one is followed by an easier one;
 //   - a stretch ends on a post (a trapdoor whose key is a post), further
 //     apart as the course goes up; each stretch has its twist (more chrome,
-//     slacker lines, no rest, wider rises).
+//     slacker lines, no rest, wider rises);
+//   - each stretch is on a floor of the house, or of the sky (floors.ts):
+//     the next one once a good player would have had its share of the
+//     house's time, and a floor has more of its own parts.
 //
 // Only a window of the course is built at a time: from the section below the
 // post the lace last saved on, to the next post, whose trapdoor stays shut
@@ -23,7 +26,9 @@
 // is there: a fall is a real fall, down to where the lace catches itself, or
 // below the post, and back to it.
 
-import { emptyLevel, merge, type Level } from '../level/level';
+import { emptyLevel, merge, type Level, type Shelf } from '../level/level';
+import { STORY } from '../tuning';
+import { FLOORS, HOUSE, nextFloor } from './floors';
 import { ASCENTS, KEYS, OBSTACLES, pushBar, start, TWISTS, type Ascent, type Ctx, type Hold, type Key, type Obstacle, type Twist } from './parts';
 
 export interface Section {
@@ -36,9 +41,31 @@ export interface Section {
   /** the hold at its top, where the next one starts */
   exit: Hold;
   twist: Twist;
+  /** the floor it is on (floors.ts) */
+  floor: number;
+  /** a post's: the height of the trapdoor's floor above it, where the floor above begins */
+  ceiling?: number;
+  /** the seconds a good player would have taken from the start to its top */
+  pace: number;
   ascent?: Ascent;
   obstacle?: Obstacle;
   key?: Key;
+}
+
+/** what the decor needs to know of a section */
+export interface Storey {
+  index: number;
+  floor: number;
+  /** the first of its floor */
+  first: boolean;
+  bottom: number;
+  top: number;
+  /** where the floor above begins (if it is another) */
+  ceiling?: number;
+  /** the floor of the section above */
+  above: number;
+  /** what can be stood on: its floors and shelves, and the floor it starts on */
+  shelves: Shelf[];
 }
 
 interface Combo { ascent: Ascent; obstacle: Obstacle; key?: Key; effort: number; weight: number }
@@ -53,6 +80,7 @@ export class Course {
   /** the stretch being laid out: its twist, the sections left before its post */
   private twist = TWISTS[0];
   private left = 0;
+  private floor = 0;
 
   constructor(readonly seed: number) {
     let s = (seed * 7919 + 104729) % 2147483647 || 1;
@@ -79,6 +107,28 @@ export class Course {
     return L;
   }
 
+  /** the sections from height `bottom` to `top`, laid out if they are not yet */
+  between(bottom: number, top: number): Section[] {
+    const out: Section[] = [];
+    for (let i = 0; ; i++) {
+      const s = this.section(i);
+      if (s.level.bottom >= top) return out;
+      if (s.level.top > bottom) out.push(s);
+    }
+  }
+
+  /** what the decor needs to know of the sections from `bottom` to `top` */
+  storeys(bottom: number, top: number): Storey[] {
+    return this.between(bottom, top).map((s) => {
+      const prev = s.index > 0 ? this.section(s.index - 1) : null;
+      const under = prev ? prev.level.shelves.filter((q) => q.y >= s.level.bottom - 0.4) : [{ x0: -0.85, x1: 0.85, y: 0 }];
+      return {
+        index: s.index, floor: s.floor, first: !prev || prev.floor !== s.floor, bottom: s.level.bottom, top: s.level.top,
+        ceiling: s.ceiling, above: this.section(s.index + 1).floor, shelves: [...under, ...s.level.shelves],
+      };
+    });
+  }
+
   /** the section that ends at or above height y */
   at(y: number): number {
     for (let i = 0; ; i++) if (this.section(i).exit.y >= y) return i;
@@ -91,7 +141,7 @@ export class Course {
     if (!prev) {
       const exit = start(c);
       L.top = exit.y;
-      this.sections.push({ index, name: 'départ', post: true, level: L, exit, twist: this.twist });
+      this.sections.push({ index, name: 'départ', post: true, level: L, exit, twist: this.twist, floor: 0, pace: 0 });
       this.newStretch(index);
       return;
     }
@@ -109,14 +159,25 @@ export class Course {
     for (const p of [ascent, obstacle, key]) if (p) this.seen.add(p.name);
     L.top = exit.y;
     const name = [ascent.name, obstacle.locked ? key!.name : obstacle.name].filter((n) => n !== 'rien').join(', ');
-    this.sections.push({ index, name, post, level: L, exit, twist: this.twist, ascent, obstacle, key });
+    const ceiling = post ? L.gates.find((g) => g.post !== undefined)?.y1 : undefined;
+    const pace = prev.pace + STORY.pace.base + STORY.pace.effort * combo.effort + STORY.pace.metre * (exit.y - prev.exit.y);
+    this.sections.push({ index, name, post, level: L, exit, twist: this.twist, floor: this.floor, ceiling, pace, ascent, obstacle, key });
     if (post) this.newStretch(index); else this.left--;
   }
 
-  /** a stretch begins: how many sections before its post (more as the course goes up), its twist (none at first) */
+  /**
+   * A stretch begins: how many sections before its post (more as the course
+   * goes up), its twist (none at first), its floor: in the house, the one
+   * the time played so far is at (never one skipped); the sky once the
+   * house's time is up; up there, a new one each stretch.
+   */
   private newStretch(index: number): void {
     this.left = 2 + Math.min(3, Math.floor(index / 20)) + (this.rnd() < 0.3 ? 1 : 0);
     this.twist = index < 12 ? TWISTS[0] : TWISTS[Math.floor(this.rnd() * TWISTS.length)];
+    if (index === 0) return;
+    const f = this.floor, due = Math.floor((this.sections[index].pace / STORY.skyAfter) * HOUSE);
+    this.floor = f >= HOUSE ? nextFloor(f) : Math.min(f + 1, due, HOUSE);
+    this.floor = Math.max(f, this.floor);
   }
 
   /** the parts of section `index`, as the rules allow (see the top of this file) */
@@ -124,6 +185,7 @@ export class Course {
     const open = <T extends { from: number; name: string }>(a: T[]) => a.filter((p) => p.from <= index);
     const heavy = (a?: Ascent) => (a?.nodes ?? 0) > 100;
     const cap = 3 + Math.min(3, Math.floor(index / 15));
+    const favours = FLOORS[this.floor].favours ?? {}, favour = (name?: string) => (name && favours[name]) || 1;
     const prevEffort = (prev.ascent?.effort ?? 0) + (prev.obstacle?.effort ?? 0) + (prev.key?.effort ?? 0);
     const combos: Combo[] = [];
     for (const ascent of open(ASCENTS)) {
@@ -132,7 +194,8 @@ export class Course {
         const keys = obstacle.locked ? (post ? [POST] : open(KEYS).filter((q) => q !== POST)) : [undefined];
         for (const key of keys) {
           const effort = ascent.effort + obstacle.effort + (key?.effort ?? 0);
-          combos.push({ ascent, obstacle, key, effort, weight: ascent.weight * (post ? 1 : obstacle.weight) * (key && !post ? key.weight : 1) });
+          const weight = ascent.weight * (post ? 1 : obstacle.weight) * (key && !post ? key.weight : 1);
+          combos.push({ ascent, obstacle, key, effort, weight: weight * favour(ascent.name) * (post ? 1 : favour(obstacle.name) * favour(key?.name)) });
         }
       }
     }

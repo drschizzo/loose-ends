@@ -4,9 +4,12 @@
 import * as THREE from 'three';
 import { TubeMesh, TubeNodes, TubeSync } from '@drschizzo/three-cable-tubes';
 import type { World } from '../sim/world';
+import { chosen } from '../play/laces';
 import { laceMaterial } from './laceMaterial';
 
-const material = laceMaterial();
+/** the stripe of the lace's braid: the lace chosen's */
+const stripe = new THREE.Color();
+const material = laceMaterial(stripe);
 const KNOB = new THREE.MeshStandardMaterial({ color: '#f2c14e', metalness: 0.6, roughness: 0.3 });
 const KNOB_SHAPE = new THREE.SphereGeometry(0.018, 16, 12);
 
@@ -20,6 +23,7 @@ export class CordsView {
 
   constructor(scene: THREE.Scene, private world: World) {
     const sim = world.sim;
+    stripe.set(chosen().stripe);
     this.nodes = new TubeNodes(sim.n);
     this.tubes = new TubeMesh(sim.n - sim.cables.length, material, this.nodes, { radial: 16, sub: 8 });
     const color = new THREE.Color();
