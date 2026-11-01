@@ -26,7 +26,7 @@ export interface Thing { kind: Kind; section: number; index: number; origin?: Or
 export const KIND_NAMES: Record<Kind, string> = {
   bars: 'barre', shelves: 'étagère', hangs: 'corde pendue', rings: 'œillet', gates: 'trappe', pulls: 'tirette', skeins: 'écheveau',
   drapes: 'fil posé', lines: 'fil tendu', nets: 'filet', movers: 'barre mobile', hazards: 'danger', winds: 'courant d\'air', searches: 'lampe qui cherche',
-  zips: 'tyrolienne', clocks: 'horloge', hooks: 'crochet', lifts: 'monte-charge', buttons: 'bouton', tips: 'aide',
+  zips: 'tyrolienne', clocks: 'horloge', hooks: 'crochet', lifts: 'monte-charge', blackouts: 'panne', buttons: 'bouton', tips: 'aide',
 };
 const MAT_NAMES: Record<string, string> = { wood: 'bois', chrome: 'chrome', rubber: 'caoutchouc', gold: 'poteau doré' };
 const HAZARD_NAMES: Record<string, string> = { blade: 'ciseaux', flame: 'flamme', water: 'eau' };
@@ -452,6 +452,7 @@ function outline(course: Course, t: Thing, pen: Pen): THREE.Object3D {
     case 'clocks': return ring(o.x, o.y, o.length + pad);
     case 'hooks': return ring(o.x, o.y, 0.03);
     case 'lifts': { const b = L.bars[o.bar]; return box(b.x - 0.06, b.y - o.drop, b.x + 0.06, b.y + b.r + pad); }
+    case 'blackouts': return box(-0.84, o.y0, 0.84, o.y1);
   }
 }
 
@@ -486,5 +487,6 @@ function distance(L: Level, t: Thing, x: number, y: number): number {
     case 'clocks': return Math.max(0, Math.hypot(x - o.x, y - o.y) - o.length) + 0.01;
     case 'hooks': return Math.max(0, Math.hypot(x - o.x, y - o.y) - 0.02);
     case 'lifts': { const b = L.bars[o.bar]; return inBox(x, y, b.x - 0.05, b.y - o.drop, b.x + 0.05, b.y) + 0.005; }
+    case 'blackouts': return Infinity;
   }
 }

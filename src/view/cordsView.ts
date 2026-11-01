@@ -34,7 +34,12 @@ export class CordsView {
     let at = 0;
     sim.cables.forEach((cb, c) => {
       const cord = world.cords[c];
-      this.tubes.lay(at, cb.start, cb.count, color.set(cord.color).convertSRGBToLinear(), 0, cord.segment, cord.tag);
+      if (cord.color2) {
+        // the pair: one lace, then the other, knotted in the middle
+        const h = cb.count >> 1;
+        this.tubes.lay(at, cb.start, h + 1, color.set(cord.color).convertSRGBToLinear(), 0, cord.segment, cord.tag);
+        this.tubes.lay(at + h, cb.start + h, cb.count - h, color.set(cord.color2).convertSRGBToLinear(), h * cord.segment, cord.segment, cord.tag);
+      } else this.tubes.lay(at, cb.start, cb.count, color.set(cord.color).convertSRGBToLinear(), 0, cord.segment, cord.tag);
       at += cb.count - 1;
     });
     this.tubes.castShadow = this.tubes.receiveShadow = true;

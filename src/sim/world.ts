@@ -34,7 +34,8 @@ export class World {
   readonly spools: { d: number; v: number; idle: number }[];
   /** the static shapes each spool, each clock hand is made of */
   private spoolShape: number[] = [];
-  private handShapes: number[][] = [];
+  /** each clock's shapes, arm by arm */
+  private handShapes: number[][][] = [];
   /** the angle of each clock's hand (rad, from straight up, clockwise) */
   readonly hands: number[];
   /** how hard each wind blows now, 0 to 1 */
@@ -87,7 +88,7 @@ export class World {
     this.surfaces.forEach((s, k) => {
       if (s.bar >= 0) this.barShape.set(s.bar, k);
       if (s.moves?.kind === 'spool') this.spoolShape[s.moves.k] = k;
-      if (s.moves?.kind === 'hand') (this.handShapes[s.moves.k] ??= []).push(k);
+      if (s.moves?.kind === 'hand') ((this.handShapes[s.moves.k] ??= [])[s.moves.arm ?? 0] ??= []).push(k);
       if (s.moves?.kind === 'handle') this.handleShape[s.moves.k] = k;
     });
     this.spools = level.zips.map(() => ({ d: 0, v: 0, idle: 0 }));
@@ -103,8 +104,30 @@ export class World {
   barAt(k: number, t: number): { x: number; y: number } {
     const b = this.level.bars[k], m = this.level.movers.find((q) => q.bar === k);
     if (!m) return b;
-    const a = Math.sin((2 * Math.PI * t) / m.period + m.phase);
+    const w = (2 * Math.PI * t) / m.period + m.phase, a = Math.sin(w);
+    // round a wheel: where it would be at its phase, the wheel's centre where it was built less that
+    if (m.orbit) return { x: b.x + m.dx * (a - Math.sin(m.phase)), y: b.y + m.dy * (Math.cos(w) - Math.cos(m.phase)) };
     return { x: b.x + m.dx * a, y: b.y + m.dy * a };
+  }
+
+  /** where hazard k is at time t (s): where it was built, or moved along its back and forth */
+  hazardAt(k: number, t: number): { x0: number; y0: number; x1: number; y1: number } {
+    const h = this.level.hazards[k], m = h.move;
+    if (!m) return h;
+    const a = Math.sin((2 * Math.PI * t) / m.period + m.phase);
+    return { x0: h.x0 + m.dx * a, y0: h.y0 + m.dy * a, x1: h.x1 + m.dx * a, y1: h.y1 + m.dy * a };
+  }
+
+  /** how dark it is at height y, time t (s): 0 lit, 1 the lights out (a blackout) */
+  darkness(y: number, t: number): number {
+    let d = 0;
+    for (const b of this.level.blackouts) {
+      if (y < b.y0 - 0.3 || y > b.y1 + 0.3) continue;
+      // out a third of the time, the lights fading out and coming back over half a second
+      const u = (((t + b.phase) / b.period) % 1 + 1) % 1;
+      d = Math.max(d, Math.min(1, Math.max(0, Math.min((u - 0.62) / 0.04, (1 - u) / 0.04))));
+    }
+    return d;
   }
 
   /** before a step at time t: the bars that move are where they are now (a grip on one goes with it); the lace dries */
@@ -127,16 +150,19 @@ export class World {
 
   /** the hand of clock k at angle a: its rods moved, a grip on it carried round */
   private turnHand(k: number, a: number): void {
-    const c = this.level.clocks[k], da = a - this.hands[k], [tx, ty] = handTip(c, a);
+    const c = this.level.clocks[k], da = a - this.hands[k];
     this.hands[k] = a;
-    for (const id of this.handShapes[k] ?? []) {
-      const sh = this.surfaces[id].shape;
-      if (sh.kind !== 'capsule') continue;
-      const moved = { ...sh, bx: tx, by: ty };
-      this.surfaces[id].shape = moved;
-      this.sim.updateStatic(id, moved);
-      this.lace.turnGrips(id, c.x, c.y, da);
-    }
+    (this.handShapes[k] ?? []).forEach((ids, j) => {
+      const [tx, ty] = handTip(c, a, j);
+      for (const id of ids) {
+        const sh = this.surfaces[id].shape;
+        if (sh.kind !== 'capsule') continue;
+        const moved = { ...sh, bx: tx, by: ty };
+        this.surfaces[id].shape = moved;
+        this.sim.updateStatic(id, moved);
+        this.lace.turnGrips(id, c.x, c.y, da);
+      }
+    });
   }
 
   /**

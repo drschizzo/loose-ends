@@ -174,8 +174,8 @@ export class LampLights {
     s.target.position.set(at.x + Math.sin(at.angle), at.y - Math.cos(at.angle), 0);
   }
 
-  /** the lamps lit round (x, y), at time t; the lace's own light at `lace` (null: none) */
-  light(fixtures: readonly Fixture[], x: number, y: number, t: number, lace: THREE.Vector3 | null): void {
+  /** the lamps lit round (x, y), at time t; the lace's own light at `lace` (null: none); `dark`: the lights out (a blackout, 0 to 1), the lace's glow alone */
+  light(fixtures: readonly Fixture[], x: number, y: number, t: number, lace: THREE.Vector3 | null, dark = 0): void {
     const d = (f: Fixture) => Math.hypot(f.x - x, f.y - y);
     this.order = fixtures.filter((f) => d(f) < FADE_OUT).sort((a, b) => d(a) - d(b)).slice(0, this.spots.length);
     this.spots.forEach((s, k) => {
@@ -188,9 +188,10 @@ export class LampLights {
       s.angle = b.angle;
       s.penumbra = b.penumbra;
       s.color.copy(f.color);
-      s.intensity = LAMP_GAIN * f.power * fade * flicker(f, t);
+      s.intensity = LAMP_GAIN * f.power * fade * flicker(f, t) * (1 - dark);
     });
-    this.lace.intensity = lace ? LACE_LIGHT : 0;
+    this.lace.intensity = lace ? LACE_LIGHT * (1 + 9 * dark) : 0;
+    this.lace.distance = 0.7 + 0.5 * dark;
     if (lace) this.lace.position.set(lace.x, lace.y + 0.03, 0.14);
   }
 }

@@ -53,6 +53,8 @@ export interface AscentData extends PartData {
   side: 'cross' | 'same' | 'any';
   /** the cords it adds, roughly (nodes of the solver): never two ascents full of cords in a row */
   nodes: number;
+  /** the set piece of a floor (its name): it comes only as the exam of that floor, under its post */
+  bravura?: string;
 }
 export interface ObstacleData extends PartData {
   /** how far from the middle its station is, on side k (negative: on the other side) */
@@ -123,7 +125,7 @@ export interface Ctx {
 }
 
 /** the arrays of a level that hold things */
-export const KINDS = ['bars', 'shelves', 'hangs', 'rings', 'gates', 'pulls', 'skeins', 'drapes', 'lines', 'nets', 'movers', 'hazards', 'winds', 'searches', 'zips', 'clocks', 'hooks', 'lifts', 'buttons', 'tips'] as const;
+export const KINDS = ['bars', 'shelves', 'hangs', 'rings', 'gates', 'pulls', 'skeins', 'drapes', 'lines', 'nets', 'movers', 'hazards', 'winds', 'searches', 'zips', 'clocks', 'hooks', 'lifts', 'blackouts', 'buttons', 'tips'] as const;
 export type Kind = (typeof KINDS)[number];
 /** what made a thing: a part (or the course itself) and the path of the step in it ("2", "2.do.0") */
 export interface Origin { part: string; path: string }
@@ -178,12 +180,14 @@ export const OPS: Record<string, Op> = {
   drape: { label: 'fil posé', help: 'Un fil posé sur une barre (son index : b.i), « gauche » de sa longueur à gauche.', fields: [NUM('bar', 'barre'), NUM('length', 'longueur'), NUM('left', 'gauche'), f('color', 'color', 'couleur')] },
   line: { label: 'fil tendu', help: 'Un fil entre deux crochets, plus long que l\'écart de « mou ».', fields: [NUM('x0', 'x0'), NUM('y0', 'y0'), NUM('x1', 'x1'), NUM('y1', 'y1'), NUM('slack', 'mou'), f('color', 'color', 'couleur', true)] },
   net: { label: 'filet', help: 'Un filet pendu par le haut (noué en bas aussi), ou une échelle de corde (deux colonnes).', fields: [NUM('x0', 'x0'), NUM('x1', 'x1'), NUM('top', 'haut'), NUM('bottom', 'bas'), NUM('cols', 'colonnes'), NUM('rows', 'rangs'), f('tied', 'bool', 'noué en bas', true), f('ladder', 'bool', 'échelle', true), f('color', 'color', 'couleur', true), f('sticky', 'bool', 'toile collante', true)] },
-  mover: { label: 'barre mobile', help: 'Fait aller et venir une barre (son index : b.i) de dx, dy de part et d\'autre, en `period` secondes.', fields: [NUM('bar', 'barre'), NUM('dx', 'dx'), NUM('dy', 'dy'), NUM('period', 'période'), NUM('phase', 'phase')] },
-  hazard: { label: 'danger', help: 'Une lame (coupe), une flamme (brûle), de l\'eau (trempe), dans la boîte de (x0, y0) à (x1, y1).', fields: [f('kind', 'hazard', 'sorte'), NUM('x0', 'x0'), NUM('y0', 'y0'), NUM('x1', 'x1'), NUM('y1', 'y1')] },
+  mover: { label: 'barre mobile', help: 'Fait aller et venir une barre (son index : b.i) de dx, dy de part et d\'autre, en `period` secondes. « En rond » : elle tourne sur une ellipse de rayons dx, dy (une roue).', fields: [NUM('bar', 'barre'), NUM('dx', 'dx'), NUM('dy', 'dy'), NUM('period', 'période'), NUM('phase', 'phase'), f('orbit', 'bool', 'en rond', true)] },
+  hazard: { label: 'danger', help: 'Une lame (coupe), une flamme (brûle), de l\'eau (trempe), dans la boîte de (x0, y0) à (x1, y1). Avec une période : elle va et vient de dx, dy.', fields: [f('kind', 'hazard', 'sorte'), NUM('x0', 'x0'), NUM('y0', 'y0'), NUM('x1', 'x1'), NUM('y1', 'y1'), NUM('dx', 'dx', true), NUM('dy', 'dy', true), NUM('period', 'période', true), NUM('phase', 'phase', true)] },
+  blackout: { label: 'panne', help: 'De y0 à y1, la lumière s\'éteint un tiers du temps, toutes les `period` s : il ne reste que la lueur du lacet.', fields: [NUM('y0', 'y0'), NUM('y1', 'y1'), NUM('period', 'période'), NUM('phase', 'phase')] },
+  partner: { label: 'l\'autre lacet', help: 'L\'autre lacet de la paire, pendu en (x, y).', fields: [NUM('x', 'x'), NUM('y', 'y')] },
   wind: { label: 'courant d\'air', help: 'De l\'air qui pousse le lacet à (vx, vy) m/s dans la boîte de (x0, y0) à (x1, y1) : l\'air chaud d\'un radiateur monte, une bouche souffle de côté. Par rafales toutes les `period` s, si dit.', fields: [NUM('x0', 'x0'), NUM('y0', 'y0'), NUM('x1', 'x1'), NUM('y1', 'y1'), NUM('vx', 'vx'), NUM('vy', 'vy'), NUM('period', 'période', true), NUM('phase', 'phase', true)] },
   search: { label: 'lampe qui cherche', help: 'Une lampe en (x, y) dont le faisceau balaie la pièce, de `arc` (rad) de part et d\'autre de la verticale, en `period` s. Dans sa lumière, les prises fatiguent vite : se cacher dans l\'ombre des barres.', fields: [NUM('x', 'x'), NUM('y', 'y'), NUM('arc', 'arc'), NUM('period', 'période'), NUM('phase', 'phase')] },
   zip: { label: 'tyrolienne', help: 'Un fil tendu de (x0, y0) en haut à (x1, y1) en bas, une bobine dessus qui file vers le bas quand on s\'y accroche.', fields: [AS, NUM('x0', 'x0'), NUM('y0', 'y0'), NUM('x1', 'x1'), NUM('y1', 'y1')] },
-  clock: { label: 'horloge', help: 'Une horloge en (x, y) dont l\'aiguille, longue de `length`, fait un tour en `period` s (négatif : à rebours). S\'y accrocher fait tourner avec elle.', fields: [AS, NUM('x', 'x'), NUM('y', 'y'), NUM('length', 'longueur'), NUM('period', 'période'), NUM('phase', 'phase')] },
+  clock: { label: 'horloge', help: 'Une horloge en (x, y) dont l\'aiguille, longue de `length`, fait un tour en `period` s (négatif : à rebours). S\'y accrocher fait tourner avec elle. « Bras » : plusieurs aiguilles, comme les pales d\'un ventilateur.', fields: [AS, NUM('x', 'x'), NUM('y', 'y'), NUM('length', 'longueur'), NUM('period', 'période'), NUM('phase', 'phase'), NUM('arms', 'bras', true)] },
   hook: { label: 'crochet', help: 'Un crochet de fer qui sort du mur, la pointe relevée : aucun bout ne s\'y accroche, le lacet s\'y pend par-dessus.', fields: [NUM('x', 'x'), NUM('y', 'y')] },
   lift: { label: 'monte-charge', help: 'Un fil sur une poulie (la barre b.i, en chrome), un plomb de `weight` fois le lacet d\'un côté, retenu ; une poignée `drop` plus bas de l\'autre (côté `side`). Saisir la poignée lâche le plomb, qui hisse le lacet.', fields: [NUM('bar', 'poulie'), NUM('drop', 'descente'), NUM('weight', 'poids'), NUM('side', 'côté')] },
   button: { label: 'bouton', help: 'Un bouton à ramasser.', fields: [NUM('x', 'x'), NUM('y', 'y')] },
@@ -321,11 +325,13 @@ export function lay(c: Ctx, p: PartData, given: Given): Laid {
       case 'wind': L.winds.push(clean({ x0: o.x0, y0: o.y0, x1: o.x1, y1: o.y1, vx: o.vx, vy: o.vy, period: o.period, phase: o.phase })); break;
       case 'search': L.searches.push({ x: o.x, y: o.y, arc: o.arc, period: o.period, phase: o.phase }); break;
       case 'zip': L.zips.push({ x0: o.x0, y0: o.y0, x1: o.x1, y1: o.y1 }); name(s, { ...L.zips[L.zips.length - 1], i: L.zips.length - 1 }); break;
-      case 'clock': L.clocks.push({ x: o.x, y: o.y, length: o.length, period: o.period, phase: o.phase }); name(s, { ...L.clocks[L.clocks.length - 1], i: L.clocks.length - 1 }); break;
+      case 'clock': L.clocks.push(clean({ x: o.x, y: o.y, length: o.length, period: o.period, phase: o.phase, arms: o.arms })); name(s, { ...L.clocks[L.clocks.length - 1], i: L.clocks.length - 1 }); break;
       case 'hook': L.hooks.push({ x: o.x, y: o.y }); break;
       case 'lift': L.lifts.push({ bar: o.bar, drop: o.drop, weight: o.weight, side: o.side >= 0 ? 1 : -1 }); break;
-      case 'mover': L.movers.push({ bar: o.bar, dx: o.dx, dy: o.dy, period: o.period, phase: o.phase }); break;
-      case 'hazard': L.hazards.push({ kind: o.kind, x0: o.x0, y0: o.y0, x1: o.x1, y1: o.y1 }); break;
+      case 'mover': L.movers.push(clean({ bar: o.bar, dx: o.dx, dy: o.dy, period: o.period, phase: o.phase, orbit: o.orbit || undefined })); break;
+      case 'hazard': L.hazards.push(clean({ kind: o.kind, x0: o.x0, y0: o.y0, x1: o.x1, y1: o.y1, move: o.period ? { dx: o.dx ?? 0, dy: o.dy ?? 0, period: o.period, phase: o.phase ?? 0 } : undefined })); break;
+      case 'blackout': L.blackouts.push({ y0: o.y0, y1: o.y1, period: o.period, phase: o.phase }); break;
+      case 'partner': L.hangs.push({ x: o.x, top: o.y, length: 1.0, partner: true }); break;
       case 'button': L.buttons.push([o.x, o.y]); break;
       case 'tip': if (p.tip && c.first(p.name)) L.tips.push({ x: o.x, y: o.y, r: o.r, text: p.tip, gate: o.gate ? L.gates.length : undefined }); break;
       case 'decoy': if (c.rnd() < c.twist.chrome && Math.abs(o.x) > 0.3) pushBar(c, clampX(-o.x * 0.8), o.y + 0.12, 'chrome', 0.018); break;

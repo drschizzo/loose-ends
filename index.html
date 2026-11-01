@@ -8,7 +8,17 @@
 </head>
 <body>
   <div id="hud">
-    <div class="row"><span id="storey"></span><span id="time">0:00:00</span><span id="buttons">0 bouton</span><span>hauteur <b id="height">0.0 m</b></span></div>
+    <div class="tag row">
+      <span id="storey"></span>
+      <span id="time">0:00:00</span>
+      <span class="wallet"><i class="btn-icon"></i><b id="buttons">0</b></span>
+      <span class="height"><b id="height">0.0 m</b><small id="best"></small></span>
+    </div>
+    <div id="flow" title="élan : les prises fatiguent moins"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div id="side">
+    <div id="challenge" class="tag hidden"><small>défi</small><span></span></div>
+    <div id="items" class="hidden"></div>
   </div>
   <div id="ends">
     <div class="end" id="end0"><span class="key">clic gauche<small>ou A</small></span><div><b>Tête</b> <em></em><div class="bar" title="force de la prise"><i></i></div></div></div>
@@ -17,12 +27,36 @@
   <div id="hint"></div>
   <div id="toast"></div>
   <div id="floor"><h2></h2><p></p></div>
+
+  <div id="post" class="panel hidden">
+    <h3>Ça tient.</h3>
+    <div id="post-split"></div>
+    <div id="post-challenge"></div>
+    <div id="post-choice"></div>
+    <div id="post-shop"></div>
+    <button id="post-go" class="primary">Repartir</button>
+  </div>
+
+  <div id="ending" class="screen hidden">
+    <h1 class="serif">Retrouvés.</h1>
+    <p class="tag-line">Deux lacets, un nœud. La montée continue, à deux.</p>
+    <p id="ending-stats"></p>
+    <div class="buttons"><button id="ending-go" class="primary">Continuer à deux</button></div>
+  </div>
+
   <div id="title" class="screen">
     <h1>LOOSE ENDS</h1>
-    <p class="tag">Un lacet. Deux bouts. Des fils partout. Grimpe.</p>
-    <p class="keys"><b class="head">clic gauche</b> / <b class="tail">clic droit</b> : un bout s'accroche · la souris : l'autre bout · Espace : se faufiler · R : dernier poteau</p>
-    <div class="buttons"><button id="resume" class="hidden"></button><button id="fresh">Nouvelle montée</button></div>
-    <div id="laces"></div>
+    <p class="tag-line">Un lacet. Deux bouts. Des fils partout. Grimpe.</p>
+    <p class="keys"><b class="head">clic gauche</b> / <b class="tail">clic droit</b> : un bout s'accroche · la souris : l'autre bout · Espace : se faufiler · W : regarder plus haut · R : dernier poteau · M : son</p>
+    <div class="buttons"><button id="resume" class="hidden primary"></button><button id="fresh" class="primary">Nouvelle montée</button><button id="daily"></button></div>
+    <div class="choose">
+      <div><small>couleur</small><div id="laces"></div></div>
+      <div><small>lacet</small><div id="kinds"></div></div>
+    </div>
+    <div class="options">
+      <label><input type="checkbox" id="one-button"> un seul bouton (un clic par prise)</label>
+      <span id="title-wallet"></span>
+    </div>
   </div>
   <script type="module" src="./src/main.ts"></script>
 </body>

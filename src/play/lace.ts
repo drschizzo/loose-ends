@@ -45,7 +45,11 @@ export type Hold = { kind: 'surface'; surface: number; x: number; y: number; z: 
 
 /** what happened to an end during a step */
 export type Event =
-  | { end: End; what: 'took' | 'let go' | 'worn out' }
+  /** `perfect`: taken at the top of a swing, the lace hardly moving after it moved fast: it costs nothing, and gives back */
+  | { end: End; what: 'took'; perfect: boolean }
+  | { end: End; what: 'let go' | 'worn out' }
+  /** an end about to let go, worn out, got its strength back (a second wind) */
+  | { end: End; what: 'rescued' }
   /** the end took hold of something with the lace moving fast: the jolt cost it stamina, or tore it off (`torn`) */
   | { end: End; what: 'jolt'; cost: number; torn: boolean }
   /** the free end was thrown, flicked up from a lace lying with nothing holding it */
@@ -81,6 +85,14 @@ export class Lace {
   held = false;
   /** how fast the grips tire, × PLAY.drain: the further up the climb, the faster (see `Climb.tiring`) */
   tiring = 1;
+  /** how fast the lace wears, × (its kind: a thread wears fast, a cord slowly) */
+  wearScale = 1;
+  /** an end about to let go, worn out: whether something gives it its strength back (a second wind) */
+  rescue: ((e: End) => boolean) | null = null;
+  /** how fast the lace slid over surfaces, last step (m/s, summed along it, × its segment): what rustles */
+  sliding = 0;
+  /** how fast the lace has moved lately (m/s, the fastest, fading over half a second): a catch at the top of a swing comes after it */
+  private recent = 0;
   /** how fast the pointer moves (m/s, smoothed), where it was last step; how long before the end may be thrown again (s) */
   private flick = { vx: 0, vy: 0, x: NaN, y: NaN, rest: 0, burst: 0 };
   /** where the free end is led: the pointer, followed with a little lag (the lace has some weight) */
@@ -212,7 +224,7 @@ export class Lace {
       const h = this.holdFor(e);
       if (!h) continue;
       // catching the lace as it falls or swings jolts the hand: the faster it goes, the more it costs
-      const cost = Math.max(0, this.speedOf() - PLAY.catchSpeed) * PLAY.catchCost;
+      const speed = this.speedOf(), cost = Math.max(0, speed - PLAY.catchSpeed) * PLAY.catchCost;
       if (cost >= e.stamina) {
         e.stamina = 0; e.spent = true; e.cooldown = PLAY.cooldown;
         out.push({ end: e, what: 'jolt', cost, torn: true });
@@ -222,7 +234,10 @@ export class Lace {
       // the end that stops the lace takes the jolt in its fibres too
       this.harm(e.node, cost * PLAY.joltWear / PLAY.catchCost, 3);
       this.take(e, h);
-      out.push({ end: e, what: 'took' });
+      // at the top of a swing (it moved fast a moment ago, it hardly moves now): a clean catch, that gives the hand some strength back
+      const perfect = this.recent > PLAY.perfectAfter && speed < PLAY.perfectAt;
+      if (perfect) { e.stamina = Math.min(1, e.stamina + PLAY.perfectGain); this.recent = 0; }
+      out.push({ end: e, what: 'took', perfect });
       if (cost > 0.05) out.push({ end: e, what: 'jolt', cost, torn: false });
     }
     // gripping nothing, the pointer takes the end nearest to it (and keeps it
@@ -324,6 +339,7 @@ export class Lace {
     const a = this.leader();
     const reach = a && a.grip === null && this.sim.targetK[a.node] > 0 ? this.sim.targetPull(a.node) / this.weight : 0;
     this.reach += (reach - this.reach) * Math.min(1, dt / 0.2);
+    this.recent = Math.max(this.speedOf(), this.recent * Math.exp(-dt / 0.5));
     for (const e of this.ends) {
       e.cooldown = Math.max(0, e.cooldown - dt);
       const g = e.grip;
@@ -351,7 +367,8 @@ export class Lace {
       const vine = PLAY.vineDrain * this.tiring;
       if (e.load < PLAY.restLoad) e.stamina = Math.min(1, e.stamina + (g.kind === 'cord' ? -vine : PLAY.recover * (1 - e.load / PLAY.restLoad)) * dt);
       else e.stamina -= (PLAY.drain * this.tiring * drain * e.load ** PLAY.drainPow + (g.kind === 'cord' ? vine : 0)) * dt;
-      if (e.stamina <= 0) {
+      if (e.stamina <= 0 && this.rescue?.(e)) { e.stamina = 0.5; out.push({ end: e, what: 'rescued' }); }
+      else if (e.stamina <= 0) {
         e.stamina = 0;
         e.cooldown = PLAY.cooldown;
         e.spent = true;
@@ -484,6 +501,7 @@ export class Lace {
 
   /** wears node i by `amount`, and its neighbours less, `spread` nodes either way */
   harm(i: number, amount: number, spread = 2): void {
+    amount *= this.wearScale;
     for (let k = -spread; k <= spread; k++) {
       const j = i + k - this.start;
       if (j >= 0 && j < this.count) this.damage[j] = Math.min(1, this.damage[j] + amount * (1 - Math.abs(k) / (spread + 1)));
@@ -493,13 +511,22 @@ export class Lace {
   /** after a step of dt: what slides over a surface wears, by how far it slid and how rough the surface is */
   rub(dt: number): void {
     const x = this.sim.x, v = this.sim.v;
+    this.sliding = 0;
     for (let i = this.start; i < this.start + this.count; i++) {
       const speed = Math.hypot(v[3 * i], v[3 * i + 1], v[3 * i + 2]);
       if (speed < 0.05) continue;
       for (const s of this.surfaces) {
         const q = snap(s, x[3 * i], x[3 * i + 1], x[3 * i + 2]);
-        if (q && q.d < 0.004) { this.damage[i - this.start] = Math.min(1, this.damage[i - this.start] + PLAY.rubWear * MATS[s.mat].wear * speed * dt); break; }
+        if (q && q.d < 0.004) { if (s.mat !== 'wall') this.sliding += speed * LACE.segment * 5; this.damage[i - this.start] = Math.min(1, this.damage[i - this.start] + PLAY.rubWear * this.wearScale * MATS[s.mat].wear * speed * dt); break; }
       }
+    }
+  }
+
+  /** mends the lace round node i (a patch): its fibres back to a third worn, `spread` nodes either way */
+  mend(i: number, spread = 6): void {
+    for (let k = -spread; k <= spread; k++) {
+      const j = i + k - this.start;
+      if (j >= 0 && j < this.count) this.damage[j] = Math.min(this.damage[j], 0.3);
     }
   }
 
