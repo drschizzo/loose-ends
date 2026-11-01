@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CABLE_KIT: 72c156ebf87919dd78a56ed079e6ace91d30c28a
+  CABLE_KIT: 1c9b2599e41fc67203109637ecf46cb2cb3bc59e
 
 jobs:
   build:
