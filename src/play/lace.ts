@@ -508,14 +508,21 @@ export class Lace {
     }
   }
 
-  /** after a step of dt: what slides over a surface wears, by how far it slid and how rough the surface is */
+  /**
+   * After a step of dt: what slides over a surface wears, by how far it slid
+   * and how rough the surface is. A hand does not slide on what it grips: the
+   * end and the few nodes next to it, on the surface it holds, are carried
+   * with it (a lift, a wheel), not rubbed
+   */
   rub(dt: number): void {
     const x = this.sim.x, v = this.sim.v;
     this.sliding = 0;
     for (let i = this.start; i < this.start + this.count; i++) {
       const speed = Math.hypot(v[3 * i], v[3 * i + 1], v[3 * i + 2]);
       if (speed < 0.05) continue;
-      for (const s of this.surfaces) {
+      const hand = this.ends.find((e) => e.grip?.kind === 'surface' && Math.abs(i - e.node) <= 3)?.grip;
+      for (const [k, s] of this.surfaces.entries()) {
+        if (hand?.kind === 'surface' && hand.surface === k) continue;
         const q = snap(s, x[3 * i], x[3 * i + 1], x[3 * i + 2]);
         if (q && q.d < 0.004) { if (s.mat !== 'wall') this.sliding += speed * LACE.segment * 5; this.damage[i - this.start] = Math.min(1, this.damage[i - this.start] + PLAY.rubWear * this.wearScale * MATS[s.mat].wear * speed * dt); break; }
       }
