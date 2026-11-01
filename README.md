@@ -2,14 +2,18 @@
 
 Un lacet échappé d'une basket grimpe parmi des fils. Prototype du concept, bâti sur le moteur de câbles [cable-kit](https://github.com/drschizzo/cable-kit) (solveur AVBD et tubes three.js). La réflexion de fond (ce que seul ce moteur permet, et comment varier les niveaux) est dans [DESIGN.md](DESIGN.md).
 
-**[Jouer en ligne](https://drschizzo.github.io/loose-ends/)** : la version publiée à chaque push sur `main` (GitHub Actions, [.github/workflows/pages.yml](.github/workflows/pages.yml), qui construit le jeu avec cable-kit à côté, au commit fixé dans `CABLE_KIT`).
+**[Jouer en ligne](https://drschizzo.github.io/loose-ends/)** : la version publiée à chaque push sur `main` (GitHub Actions, [.github/workflows/pages.yml](.github/workflows/pages.yml)).
 
 ```bash
+git clone --recursive https://github.com/drschizzo/loose-ends.git
+cd loose-ends
 npm install
 npm run dev        # http://localhost:5173
 ```
 
-Le dossier `cable-kit` doit se trouver à côté de celui-ci (`../cable-kit`). Le jeu lit le moteur depuis ses sources (alias dans [vite.config.ts](vite.config.ts)), donc une modification du moteur se voit tout de suite.
+Le moteur est le sous-module [cable-kit](cable-kit), fixé à un commit ; dans un clone fait sans `--recursive`, `git submodule update --init` le récupère. Ses deux paquets sont des dépendances `file:` du jeu, qui les lit depuis leurs sources (la condition `source` de leurs `exports`, dans [vite.config.ts](vite.config.ts) et [tsconfig.json](tsconfig.json)) : une modification du moteur se voit tout de suite.
+
+Pour faire avancer le moteur : travailler dans `cable-kit/` (c'est un dépôt git complet), y commiter et pousser sur GitHub, puis commiter ici le nouveau commit du sous-module (`git add cable-kit`). La version en ligne prend le commit enregistré, qui doit donc être sur GitHub.
 
 ## Jouer
 
@@ -117,11 +121,11 @@ Chaque trappe porte un point de couleur, et ce qui l'ouvre porte le même. Sous 
 
 ## Ce que le moteur a gagné
 
-`CableSim.targetPull(i, out?)` donne la force qu'une cible exerce sur son nœud, c'est-à-dire ce que « sent » une main. Elle égale le poids porté quand le solveur a convergé, d'où les 12 sous-pas du jeu. C'est testé dans `cable-kit/tests/physics.test.ts`.
+`CableSim.targetPull(i, out?)` donne la force qu'une cible exerce sur son nœud, c'est-à-dire ce que « sent » une main. Elle égale le poids porté quand le solveur a convergé, d'où les 12 sous-pas du jeu. C'est testé dans [cable-kit/tests/physics.test.ts](cable-kit/tests/physics.test.ts).
 
 `TubeNodes.wear(i, v)` (three-cable-tubes) donne l'usure d'un nœud, que le shader du matériau lit dans `tubeWear`, interpolée le long du tube : c'est ce qui masque les fibres du lacet usé.
 
-`CableSim.updateStatic(id, shape)` remplace une seule forme statique (elle a bougé), la range de nouveau, et ne réveille que les câbles près d'elle. `setStatics` reconstruit tout et réveille tout le monde. C'est ce qui fait glisser les barres mobiles et ouvrir les trappes sans réveiller le niveau entier. Testé dans `cable-kit/tests/physics.test.ts` : une barre qui monte emporte la corde posée dessus, une corde loin d'elle dort toujours.
+`CableSim.updateStatic(id, shape)` remplace une seule forme statique (elle a bougé), la range de nouveau, et ne réveille que les câbles près d'elle. `setStatics` reconstruit tout et réveille tout le monde. C'est ce qui fait glisser les barres mobiles et ouvrir les trappes sans réveiller le niveau entier. Testé dans [cable-kit/tests/physics.test.ts](cable-kit/tests/physics.test.ts) : une barre qui monte emporte la corde posée dessus, une corde loin d'elle dort toujours.
 
 `SimParams.staticCell` règle la taille des cellules où le solveur range les formes statiques (5 cm par défaut, comme avant). Les murs de la montée sans fin font des mètres de haut : rangés en cellules de 5 cm, ils prenaient 130 à 230 ms à chaque construction du monde et à chaque ouverture de trappe. En cellules de 25 cm, cela prend 1 à 5 ms, et les contacts trouvés sont les mêmes.
 

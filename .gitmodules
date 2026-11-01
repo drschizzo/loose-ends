@@ -1,0 +1,3 @@
+[submodule "cable-kit"]
+	path = cable-kit
+	url = https://github.com/drschizzo/cable-kit.git

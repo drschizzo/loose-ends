@@ -10,6 +10,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@drschizzo/avbd-cables": "file:cable-kit/packages/avbd-cables",
+    "@drschizzo/three-cable-tubes": "file:cable-kit/packages/three-cable-tubes",
     "@types/node": "^22.20.5",
     "three": "^0.183.2"
   },
