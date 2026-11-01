@@ -72,6 +72,8 @@ export class Lace {
    * must be brought back the way it came, as with a real lace.
    */
   slipping = false;
+  /** how fast the grips tire, × PLAY.drain: the further up the climb, the faster (see `Climb.tiring`) */
+  tiring = 1;
   /** where the free end is led: the pointer, followed with a little lag (the lace has some weight) */
   private follow = { x: 0, y: 0 };
   private followed: End | null = null;
@@ -280,8 +282,9 @@ export class Lace {
       const now = (other === a ? this.reach : 0) + over;
       e.load += (now - e.load) * Math.min(1, dt / 0.2);
       const drain = g.kind === 'surface' ? g.drain : 1;
-      if (e.load < PLAY.restLoad) e.stamina = Math.min(1, e.stamina + (g.kind === 'cord' ? -PLAY.vineDrain : PLAY.recover * (1 - e.load / PLAY.restLoad)) * dt);
-      else e.stamina -= (PLAY.drain * drain * e.load ** PLAY.drainPow + (g.kind === 'cord' ? PLAY.vineDrain : 0)) * dt;
+      const vine = PLAY.vineDrain * this.tiring;
+      if (e.load < PLAY.restLoad) e.stamina = Math.min(1, e.stamina + (g.kind === 'cord' ? -vine : PLAY.recover * (1 - e.load / PLAY.restLoad)) * dt);
+      else e.stamina -= (PLAY.drain * this.tiring * drain * e.load ** PLAY.drainPow + (g.kind === 'cord' ? vine : 0)) * dt;
       if (e.stamina <= 0) {
         e.stamina = 0;
         e.cooldown = PLAY.cooldown;

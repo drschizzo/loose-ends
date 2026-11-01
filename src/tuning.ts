@@ -43,6 +43,15 @@ export const PLAY = {
   /** stamina lost per second by a grip working as hard as the lace weighs (× effort^drainPow): the other end reaching, a pull beyond the lace's weight */
   drain: 0.4,
   drainPow: 1.2,
+  /**
+   * How fast grips tire goes with the climb (× drain, and hanging from a
+   * cord): `easy` at the start, rising with the time a good player would
+   * have taken (see STORY) to 1 at the sky; above, `harder` more for each
+   * as long again, up to `hardest`
+   */
+  easy: 0.45,
+  harder: 0.3,
+  hardest: 1.4,
   /** a grip working less than this (× the weight) rests: hanging still, the lace draped by it */
   restLoad: 0.35,
   /** stamina won back per second, gripping at rest / not gripping */

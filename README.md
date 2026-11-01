@@ -78,6 +78,8 @@ Chaque étage a son papier peint, son bois, sa lumière (chaude dans l'entrée, 
 
 **Quand change-t-on d'étage.** Sur un poteau, donc juste après une sauvegarde : le nouvel étage vient comme une récompense, avec son carton (son nom, une ligne) la première fois. L'étage d'un tronçon suit le temps qu'un bon joueur, sans chute, aurait mis pour y arriver : le parcours l'estime section par section (`STORY.pace` dans [src/tuning.ts](src/tuning.ts) : 22 s, plus 14 s par point d'effort, plus 9 s par mètre). Les neuf étages de la maison se partagent `STORY.skyAfter` (50 min). Sur cinq graines, le ciel arrive après 51 à 59 min estimées, entre 75 et 88 m. **Cette estimation n'a pas été mesurée sur un vrai joueur** : la montée garde l'heure où chaque étage a été atteint (`game.pace` dans la console), pour régler `STORY.pace`.
 
+**La fatigue monte avec la montée.** Une prise s'épuise d'abord moins vite (× 0,45 dans l'entrée), puis de plus en plus vite selon ce même temps estimé, jusqu'à la vitesse réglée par `PLAY.drain` en arrivant au ciel (× 1), et au-delà encore plus vite, de 0,3 par tranche de 50 min, sans dépasser × 1,4. Pendre à une corde suit la même courbe. Réglable dans l'adresse : `?easy=0.6&harder=0.2&hardest=1.2`.
+
 Rarement (une section sur neuf environ), une pièce garde un **souvenir** : la mer (une carte postale de Biarritz, la fenêtre sur la plage), Noël (la neige à la fenêtre, une guirlande), le bal (un gramophone), le jardin (un chapeau de paille). Quelques notes de boîte à musique quand le lacet y entre.
 
 **Les lacets.** Chaque étage atteint pour la première fois (sur n'importe quelle montée) peut en donner un, à choisir sous l'écran titre : le lacet du dimanche, de randonnée, le fil rouge, le lacet doré, le ruban bleu.

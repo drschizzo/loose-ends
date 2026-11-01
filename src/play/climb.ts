@@ -5,6 +5,7 @@
 
 import { Course, type Storey } from '../gen/course';
 import { placeKey, type Level } from '../level/level';
+import { PLAY, STORY } from '../tuning';
 import type { Save } from './rules';
 
 /** what is kept of a climb between two visits */
@@ -47,6 +48,16 @@ export class Climb {
 
   /** what the decor needs of the sections of level L */
   storeys(L: Level): Storey[] { return this.course.storeys(L.bottom, L.top); }
+
+  /**
+   * How fast the grips tire at height y (× PLAY.drain): gently at first,
+   * then faster as the course goes on, by the time a good player would have
+   * taken to get there; the same at the sky as tuned, harder above
+   */
+  tiring(y: number): number {
+    const t = this.course.section(this.course.at(Math.max(0, y))).pace / STORY.skyAfter;
+    return t <= 1 ? PLAY.easy + (1 - PLAY.easy) * t : Math.min(PLAY.hardest, 1 + PLAY.harder * (t - 1));
+  }
 
   /** floor f reached after `time` seconds of play this visit: whether it is the first time on this climb */
   reached(f: number, time: number): boolean {

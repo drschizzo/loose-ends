@@ -165,9 +165,10 @@ export class Game {
     if (lace.centre()[1] < this.world.level.bottom - 0.4) { this.respawn(); this.hud.toast('Tombé ! Retour au dernier poteau', 1.8); }
   }
 
-  /** the floor the lace is in: its name at the top; the first time, its card (and a lace found, now and then); a rare room's tune */
+  /** the floor the lace is in: how fast its grips tire there; its name at the top; the first time, its card (and a lace found, now and then); a rare room's tune */
   private storey(y: number): void {
     const decor = this.scenery.decor, f = decor.floorAt(y);
+    this.lace.tiring = this.climb.tiring(y);
     if (f !== this.floor) {
       this.floor = f;
       this.hud.storey(FLOORS[f].name);
