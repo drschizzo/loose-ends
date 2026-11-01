@@ -6,7 +6,7 @@
 // umbrellas, cartons) are gone: drawn flat, they never matched the lace and
 // the bars, and the procedural climb showed them again and again. What is
 // left glows, or is soft at the edges, or is too small to be looked at: a
-// moon, clouds, a star, the bow the thread ends in, the spider of a web.
+// moon, a star, the bow the thread ends in, the spider of a web.
 //
 // A thing is asked for by its name. It is drawn in centimetres, its size
 // given with it.
@@ -55,15 +55,6 @@ const KINDS: Record<string, Kind> = {
       g.fillStyle = gr; g.fillRect(0, 0, 30, 30);
       disc(g, '#fff4d0', 15, 15, 8);
       g.globalCompositeOperation = 'destination-out'; disc(g, '#000', 19, 12.5, 7.4); g.globalCompositeOperation = 'source-over';
-    },
-  },
-  cloud: {
-    w: 70, h: 30, soft: true, glow: true, draw(g, w, h, r) {
-      for (let i = 0; i < 9; i++) {
-        const x = 12 + r() * 46, y = 13 + (r() - 0.3) * 8, s = 7 + r() * 8, gr = g.createRadialGradient(x, y, 0, x, y, s);
-        gr.addColorStop(0, 'rgba(255, 255, 255, 0.55)'); gr.addColorStop(0.6, 'rgba(255, 255, 255, 0.35)'); gr.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        g.fillStyle = gr; g.fillRect(0, 0, 70, 30);
-      }
     },
   },
   star: {

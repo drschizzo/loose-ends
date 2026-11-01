@@ -179,6 +179,8 @@ export class Scenery {
       } else add(new THREE.Mesh(new THREE.BoxGeometry(w, ht, 2 * ROOM.z), WATER), false).position.set(cx, cy, 0);
       this.hazards.push({ kind: h.kind, parts });
     }
+    // smoke over the flames (and over the decor's candles)
+    this.decor.smokeFrom(L.hazards.filter((h) => h.kind === 'flame').map((h) => ({ x: (h.x0 + h.x1) / 2, y: h.y1 })));
 
     this.things(L, add);
 
