@@ -1,35 +1,53 @@
 // The decor of a window of the course: the walls of each floor, papered as
-// its theme says, the height gauge, the red thread that runs up through the
-// house, what hangs on the walls and stands on the floors (the story, told by
-// things), the windows and what they look out on; above the house, the sky.
-// And what lives in it: dust in the air, a spider on its thread, birds,
-// shooting stars, memories floating. Built with the scenery, into its group,
-// dropped with it.
+// its theme says: hung with its cloth (or papered, as before: ?papier), the
+// height gauge, the red thread that runs up through the house, the windows
+// and what they look out on (on paper only); above the house, the sky. And
+// what lives in it: dust in the air, shooting stars, clouds. Built with the
+// scenery, into its group, dropped with it.
+//
+// Nothing stands between the camera and the room: the silhouettes that did,
+// and then the blurred threads, read as cut-outs or as black bars.
 //
 // None of it is in the solver: it costs nothing to the physics. It is all on
 // the wall, behind what is played with, or far behind in the sky.
 
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import type { Storey } from '../gen/course';
 import { HOUSE } from '../gen/floors';
-import { ROOM, type Shelf } from '../level/level';
-import { art, DOT, gauge, outside, RING, seeded, sky, TILE, wallpaper } from './paint';
-import { MEMORIES, THEMES, type Air, type Mood, type Theme } from './themes';
+import { ROOM } from '../level/level';
+import { fixtureMesh, flicker, layFixtures, type Fixture } from './lamps';
+import { art, DOT, gauge, outside, relief, RING, seeded, sky, TILE, wallpaper } from './paint';
+import { MEMORIES, THEMES, type Air, type Cloth, type Theme } from './themes';
+import { hash2, tsl, type ShaderNode } from './tsl';
+
+const {
+  color, cos, float, floor, fract, fwidth, instancedBufferAttribute, materialColor, max, mix, mx_fractal_noise_float, normalize, positionView,
+  positionWorld, pow, select, sin, smoothstep, texture, transformNormalToView, uniform, uv, vec2, vec3, vec4,
+} = tsl;
+
+/** the walls of the house hung with cloth; papered as before with ?papier */
+const CLOTHED = !new URLSearchParams(location.search).has('papier');
 
 export const theme = (f: number): Theme => THEMES[Math.min(f, THEMES.length - 1)];
 
 /** a floor's stretch of height, in this window: [y0, y1], and whether its top is where the next floor begins */
 export interface Band { floor: number; y0: number; y1: number; closed: boolean }
 
-/** the light of a height, mixed between two floors near where they meet */
-export interface Light { bg: THREE.Color; sky: THREE.Color; ground: THREE.Color; ambient: number; sun: THREE.Color; sunI: number }
+/**
+ * The light of a height, mixed between two floors near where they meet.
+ * `shade`: how much the key light's shadows show (0 to 1); `front`: where it
+ * stands, raking the wall from one side (0) or from just above the camera
+ * (1). A floor lit by its lamps has their long shadows alone: there, the key
+ * light comes from the front, and only leaves a short soft shadow under each
+ * bar (it stands out from the wall), never a second long one from a light
+ * nowhere to be seen.
+ */
+export interface Light { bg: THREE.Color; sky: THREE.Color; ground: THREE.Color; ambient: number; sun: THREE.Color; sunI: number; rays: number; shade: number; front: number }
 
 const WALL = -ROOM.z;
 const W = 2 * ROOM.x;
 /** the floors of the house that keep the height gauge (not the roof) */
 const GAUGED = HOUSE - 1;
-/** what floats in the sky: things from the house, faded */
-const DRIFT = ['shoes', 'frame:wedding', 'knitting', 'teddy', 'slippers', 'glasses', 'drawing:papi', 'frame:couple', 'calendar', 'hat', 'letters', 'drawing:mamie', 'frame:baby'];
 
 // what every build shares: the plane every picture is drawn on, the materials of the pictures, papers and woods
 const PLANE = new THREE.PlaneGeometry(1, 1);
@@ -43,6 +61,31 @@ function shared<T extends THREE.Material>(key: string, make: () => T): T {
 /** what is shared between builds, not to be freed with one */
 export const keeps = (o: THREE.Material | THREE.BufferGeometry): boolean => kept.has(o);
 
+/** how bright the outside is through a window, × white */
+const WINDOW_LIGHT = 1.8;
+/** the clock of what twinkles (s) */
+const clock = uniform(0);
+/** how bright a star is, × white */
+const STAR_LIGHT = 3;
+
+/**
+ * Points of light or dust, each a sprite facing the camera, `pos` 3 numbers
+ * a point (WebGPU draws points a pixel wide: these are quads, instanced)
+ */
+function sprites(pos: THREE.InstancedBufferAttribute, m: THREE.PointsNodeMaterial): THREE.Sprite {
+  m.positionNode = instancedBufferAttribute(pos);
+  const s = new THREE.Sprite(m);
+  s.count = pos.count;
+  s.frustumCulled = false;
+  return s;
+}
+
+/** a stitch over the seam where two cloths meet */
+const STITCH = new THREE.CapsuleGeometry(0.0022, 0.013, 2, 6);
+kept.add(STITCH);
+/** how far apart the stitches (m) */
+const STITCH_EVERY = 0.022;
+
 const SHAFT = (() => {
   const c = document.createElement('canvas'); c.width = 4; c.height = 128;
   const g = c.getContext('2d')!, gr = g.createLinearGradient(0, 0, 0, 128);
@@ -51,10 +94,118 @@ const SHAFT = (() => {
   return new THREE.CanvasTexture(c);
 })();
 
-/** a picture's material: lit like the wall and a little dulled, or glowing (the sky: dimmed as dark as its floor), or faded (a memory) */
-function picture(name: string, faded = false, floor = 0): THREE.Material {
+/**
+ * The paper of a floor: its motif embossed (the light grazing it picks it
+ * out), and grimy: stains of damp and smoke, darker in the corners, the
+ * paper paler only where the frames hung
+ */
+function paper(floor: number, motif: Theme['paper']['motif'], colors: Theme['paper']['colors']): THREE.Material {
+  return shared(`paper ${floor}`, () => {
+    const map = wallpaper(motif, colors);
+    const m = new THREE.MeshStandardNodeMaterial({ map, normalMap: relief(map, motif === 'bricks' || motif === 'beams' ? 4 : 2.5), roughness: 0.95 });
+    m.normalScale.set(1, 1);
+    const p = positionWorld.xy;
+    // broad stains of damp and smoke, browner than the paper; a few darker spots of mould
+    const stain = smoothstep(0.35, 0.75, mx_fractal_noise_float(vec3(p.x.mul(0.9), p.y.mul(0.6), 0.5), 4, 2, 0.5, 1).mul(0.5).add(0.5));
+    const spots = smoothstep(0.7, 0.85, mx_fractal_noise_float(vec3(p.mul(5), 3.1), 3, 2, 0.5, 1).mul(0.5).add(0.5));
+    // towards the sides of the room the paper is older, as if the light never reached it
+    const edge = smoothstep(0.45, 0.85, p.x.abs());
+    const tint = mix(vec3(1), vec3(0.62, 0.52, 0.4), stain.mul(0.6).add(spots.mul(0.3)).add(edge.mul(0.35)));
+    m.colorNode = materialColor.mul(vec4(tint.mul(vec3(0.9, 0.86, 0.8)), 1));
+    return m;
+  });
+}
+
+/**
+ * The weave of a cloth at q (m): how high the thread on top stands there (0
+ * to 1), and which thread it is (a number, for its colour). Plain weave and
+ * twill: the threads up and down (warp) and across (weft) go over and under
+ * each other, by one or by two; knit: rows of V's, each leg a slanted
+ * ellipse; felt and velvet: no threads to see, a fine fuzz.
+ */
+function weave(c: Cloth, q: ShaderNode): { h: ShaderNode; id: ShaderNode } {
+  const P = Math.PI;
+  if (c.weave === 'plain' || c.weave === 'twill') {
+    const u = q.x.div(c.pitch), v = q.y.div(c.pitch), i = floor(u), j = floor(v);
+    // how high each of the two threads crossing here rides: on top at one crossing, under at the next (twill: two by two)
+    const up = c.weave === 'plain' ? cos(v.sub(0.5).add(i).mul(P)) : sin(v.sub(i).mul(P / 2));
+    const down = c.weave === 'plain' ? cos(u.sub(0.5).add(j).mul(P)).negate() : sin(j.sub(u).add(1).mul(P / 2)).negate();
+    // a thread is round: highest along its middle
+    const warp = pow(sin(fract(u).mul(P)), 0.6).mul(up.mul(0.35).add(0.65));
+    const weft = pow(sin(fract(v).mul(P)), 0.6).mul(down.mul(0.35).add(0.65));
+    return { h: max(warp, weft), id: select(warp.greaterThan(weft), i, j.add(5000)) };
+  }
+  if (c.weave === 'knit') {
+    const u = q.x.div(c.pitch), v = q.y.div(c.pitch * 0.8), fu = fract(u), j = floor(v);
+    let h: ShaderNode = float(0);
+    // the legs of this row's stitch, and of the rows above and below, which reach into it
+    for (const k of [-1, 0, 1]) {
+      const fv = fract(v).sub(k);
+      for (const s of [-1, 1]) {
+        const dx = fu.sub(0.5 + 0.21 * s), dy = fv.sub(0.5);
+        const along = dx.mul(0.387 * s).add(dy.mul(0.922)), across = dx.mul(0.922).sub(dy.mul(0.387 * s));
+        h = max(h, float(1).sub(along.div(0.62).pow(2)).sub(across.div(0.2).pow(2)).max(0).sqrt());
+      }
+    }
+    return { h, id: j };
+  }
+  // felt, velvet: a fuzz of fibres
+  return { h: mx_fractal_noise_float(vec3(q.mul(c.weave === 'felt' ? 160 : 400), 0.3), 2, 2, 0.5, 1).mul(0.5).add(0.5), id: float(0) };
+}
+
+/**
+ * A wall of cloth: woven, its threads in relief under the
+ * grazing light of the lamps, each thread a little lighter or darker than the
+ * next and now and then one of another colour (knit: a stripe); hung in
+ * folds, darker in their hollows. Velvet shines at the grazing angles. The
+ * weave fades to its average colour where its threads get thinner than the
+ * pixels (the editor, from afar).
+ */
+function cloth(level: number, c: Cloth): THREE.Material {
+  return shared(`cloth ${level}`, () => {
+    const [main, shade, accent] = c.colors.map((h) => color(h));
+    const m = c.weave === 'velvet'
+      ? new THREE.MeshPhysicalNodeMaterial({ roughness: 0.85, sheen: 1, sheenRoughness: 0.4, sheenColor: new THREE.Color(c.colors[0]).lerp(new THREE.Color('#ffffff'), 0.35) })
+      : new THREE.MeshStandardNodeMaterial({ roughness: 0.95 });
+    const p = positionWorld.xy;
+    const threads = c.weave !== 'felt' && c.weave !== 'velvet';
+    // the threads fade out as they get thinner than two pixels
+    const fine = float(1).sub(smoothstep(0.2, 0.5, fwidth(p.x).div(c.pitch)));
+    /** the folds: vertical, as hung, wandering a little as they go down (m, ± FOLD × folds) */
+    const FOLD = 0.012;
+    const folds = (q: ShaderNode) => {
+      if (!c.folds) return float(0);
+      const n = mx_fractal_noise_float(vec3(q.x.mul(1.3), q.y.mul(0.35), 7.1), 2, 2, 0.5, 1);
+      return sin(q.x.mul((2 * Math.PI) / 0.16).add(n.mul(5))).mul(0.6).add(sin(q.x.mul((2 * Math.PI) / 0.41).add(n.mul(3)).add(1.3)).mul(0.4)).mul(FOLD * c.folds);
+    };
+    const depth = threads ? c.pitch * 0.18 : 0.0005;
+    const height = (q: ShaderNode) => folds(q).add(weave(c, q).h.mul(depth).mul(fine));
+    // the slope of the cloth, from its height a fraction of a millimetre away
+    const e = 0.0006, h0 = height(p);
+    const slope = vec2(height(p.add(vec2(e, 0))).sub(h0), height(p.add(vec2(0, e))).sub(h0)).div(e);
+    m.normalNode = transformNormalToView(normalize(vec3(slope.negate(), 1)));
+
+    const w = weave(c, p), tint = hash2(vec2(w.id, 3.7));
+    let col: ShaderNode = c.weave === 'felt' ? mix(shade, main, w.h.mul(0.3).add(0.7))
+      : c.weave === 'velvet' ? main
+      : mix(shade, main, w.h.mul(0.6).add(0.4)).mul(tint.mul(0.16).add(0.92));
+    // now and then a thread of another colour; in a knit, a stripe two rows wide
+    const other = c.weave === 'knit'
+      ? hash2(vec2(floor(w.id.div(9)), 11.3)).greaterThan(0.7).and(w.id.sub(floor(w.id.div(9)).mul(9)).lessThan(2))
+      : hash2(vec2(w.id, 11.3)).greaterThan(0.985);
+    if (threads) col = select(other, mix(col, accent, 0.7).mul(w.h.mul(0.5).add(0.5)), col);
+    col = mix(mix(shade, main, 0.75), col, fine);
+    // darker in the hollows of the folds, and in broad patches (dyed unevenly, faded)
+    if (c.folds) col = col.mul(smoothstep(-1, 1, folds(p).div(FOLD * c.folds)).mul(0.3).add(0.7));
+    col = col.mul(mx_fractal_noise_float(vec3(p.mul(c.weave === 'felt' ? 6 : 2.2), 1.7), 2, 2, 0.5, 1).mul(0.1).add(1));
+    m.colorNode = vec4(col, 1);
+    return m;
+  });
+}
+
+/** a picture's material: lit like the wall and a little dulled, or glowing (the sky: dimmed as dark as its floor) */
+function picture(name: string, floor = 0): THREE.Material {
   const a = art(name);
-  if (faded) return shared(`memory ${name}`, () => new THREE.MeshBasicMaterial({ map: a.tex, transparent: true, depthWrite: false, opacity: 0.5, color: '#e6ecff' }));
   if (a.glow && name === 'cloud') {
     const m = theme(floor).mood;
     return shared(`cloud ${floor}`, () => new THREE.MeshBasicMaterial({ map: a.tex, transparent: true, depthWrite: false, color: new THREE.Color(m.bg).lerp(new THREE.Color('#ffffff'), Math.min(1, m.ambient / 1.6) ** 2) }));
@@ -66,10 +217,10 @@ function picture(name: string, faded = false, floor = 0): THREE.Material {
 
 const lerpColor = (a: THREE.Color, b: THREE.Color, t: number, out: THREE.Color) => out.copy(a).lerp(b, t);
 const MOODS = THEMES.map((t) => ({
-  bg: new THREE.Color(t.mood.bg), sky: new THREE.Color(t.mood.sky), ground: new THREE.Color(t.mood.ground), ambient: t.mood.ambient, sun: new THREE.Color(t.mood.sun), sunI: t.mood.sunI,
+  bg: new THREE.Color(t.mood.bg), sky: new THREE.Color(t.mood.sky), ground: new THREE.Color(t.mood.ground), ambient: t.mood.ambient, sun: new THREE.Color(t.mood.sun), sunI: t.mood.sunI, rays: t.mood.rays ?? 0, shade: t.lamp ? 0.5 : 1, front: t.lamp ? 1 : 0,
 }));
 
-interface Rect { x0: number; y0: number; x1: number; y1: number }
+export interface Rect { x0: number; y0: number; x1: number; y1: number }
 const overlaps = (a: Rect, list: Rect[]) => list.some((b) => a.x0 < b.x1 + 0.03 && b.x0 < a.x1 + 0.03 && a.y0 < b.y1 + 0.03 && b.y0 < a.y1 + 0.03);
 
 /** what drifts in the air, by kind: its look, how it moves (m/s), how many of the particles show */
@@ -87,21 +238,23 @@ export class Decor {
   readonly bands: Band[] = [];
   /** the sections that keep a memory (a rare room): from where to where */
   readonly memories: { index: number; y0: number; y1: number }[] = [];
+  /** the lamps on its walls (lamps.ts): the stage lights those nearest the camera */
+  readonly fixtures: Fixture[] = [];
+  private flames: { f: Fixture; flame: THREE.Mesh }[] = [];
   private own: { dispose(): void }[] = [];
-  private spiders: { body: THREE.Mesh; line: THREE.Line; top: number; phase: number }[] = [];
   private floats: { m: THREE.Object3D; y: number; phase: number; spin: number }[] = [];
-  private birds: THREE.Mesh[] = [];
   private streak: THREE.Mesh;
   private streakT = 99;
-  private stars: THREE.ShaderMaterial[] = [];
-  private air: THREE.Points;
+  private air: THREE.Sprite;
   private airKind: Air = 'none';
   private motes = new Float32Array(MOTES * 3);
+  private moteAt = new THREE.InstancedBufferAttribute(this.motes, 3);
   private moteSeed = Float32Array.from({ length: MOTES }, () => Math.random());
-  private light: Light = { bg: new THREE.Color(), sky: new THREE.Color(), ground: new THREE.Color(), ambient: 1, sun: new THREE.Color(), sunI: 1 };
+  private light: Light = { bg: new THREE.Color(), sky: new THREE.Color(), ground: new THREE.Color(), ambient: 1, sun: new THREE.Color(), sunI: 1, rays: 0, shade: 1, front: 0 };
 
   /** the decor of `storeys` (the sections of the window), for course `seed`; the best height reached, marked on the gauge */
-  constructor(private group: THREE.Group, storeys: Storey[], seed: number, bottom: number, top: number, best: number) {
+  /** `avoid`: where the level has things on the wall (a clock's face): nothing is hung there */
+  constructor(private group: THREE.Group, storeys: Storey[], seed: number, bottom: number, top: number, best: number, private avoid: Rect[] = []) {
     // the floors, from bottom to top: one changes to the next at the trapdoor over a post
     let y0 = bottom - 1;
     storeys.forEach((s, k) => {
@@ -114,22 +267,12 @@ export class Decor {
     this.thread(seed);
     for (const s of storeys) this.furnish(s, seed, best);
 
-    // the birds, a shooting star, what drifts in the air: wherever the camera is
-    for (let i = 0; i < 5; i++) {
-      const m = new THREE.Mesh(PLANE, picture('bird'));
-      m.scale.set(0.09, 0.045, 1);
-      m.visible = false;
-      this.add(m);
-      this.birds.push(m);
-    }
+    // a shooting star, what drifts in the air: wherever the camera is
     this.streak = this.add(new THREE.Mesh(PLANE, shared('streak', () => new THREE.MeshBasicMaterial({ map: DOT, color: '#fff6dc', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }))));
     this.streak.visible = false;
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(this.motes, 3));
-    this.air = new THREE.Points(geo, new THREE.PointsMaterial({ map: DOT, size: 0.012, transparent: true, depthWrite: false, opacity: 0 }));
-    this.air.frustumCulled = false;
+    this.air = sprites(this.moteAt, new THREE.PointsNodeMaterial({ map: DOT, size: 0.012, transparent: true, depthWrite: false, opacity: 0 }));
     this.group.add(this.air);
-    this.own.push(geo, this.air.material as THREE.Material);
+    this.own.push(this.air.material as THREE.Material);
   }
 
   /** the band of floor at height y */
@@ -157,41 +300,30 @@ export class Decor {
     lerpColor(a.bg, c.bg, t, L.bg); lerpColor(a.sky, c.sky, t, L.sky); lerpColor(a.ground, c.ground, t, L.ground); lerpColor(a.sun, c.sun, t, L.sun);
     L.ambient = a.ambient + (c.ambient - a.ambient) * t;
     L.sunI = a.sunI + (c.sunI - a.sunI) * t;
+    L.rays = a.rays + (c.rays - a.rays) * t;
+    L.shade = a.shade + (c.shade - a.shade) * t;
+    L.front = a.front + (c.front - a.front) * t;
     return L;
   }
 
   /** what lives: `now` seconds of the clock, the camera at height y */
   update(now: number, dt: number, y: number): void {
-    for (const s of this.stars) s.uniforms.time.value = now;
-    for (const s of this.spiders) {
-      const sy = s.top - 0.22 - 0.16 * (0.5 + 0.5 * Math.sin(now * 0.22 + s.phase));
-      s.body.position.y = sy;
-      const p = s.line.geometry.attributes.position as THREE.BufferAttribute;
-      p.setY(1, sy + 0.02); p.needsUpdate = true;
-    }
+    clock.value = now;
+    for (const { f, flame } of this.flames) { const k = flicker(f, now); flame.scale.set(0.8 + 0.3 * k, 0.7 + 0.4 * k, 1); }
     for (const f of this.floats) {
       f.m.position.y = f.y + 0.04 * Math.sin(now * 0.4 + f.phase);
       f.m.rotation.z = f.spin * Math.sin(now * 0.25 + f.phase);
     }
     const th = theme(this.floorAt(y));
-    // birds across the sky, flapping
-    const flying = !!th.life?.includes('birds');
-    this.birds.forEach((b, k) => {
-      b.visible = flying;
-      if (!flying) return;
-      const x = ((now * (0.25 + 0.05 * k) + k * 2.3) % 12) - 6;
-      b.position.set(x, y + 0.4 + 0.35 * Math.sin(k * 1.7) + 0.05 * Math.sin(now + k), -1.8);
-      b.scale.y = 0.045 * (0.5 + 0.5 * Math.abs(Math.sin(now * 7 + k)));
-    });
     // now and then, a shooting star
     this.streakT += dt;
-    if (th.life?.includes('shooting') && this.streakT > 6 + 5 * this.moteSeed[0]) {
+    if (th.shooting && this.streakT > 6 + 5 * this.moteSeed[0]) {
       this.streakT = 0;
       this.moteSeed[0] = Math.random();
       this.streak.userData = { x: -2 + 3 * Math.random(), y: y + 0.6 + 0.8 * Math.random() };
     }
     const st = this.streakT / 0.9;
-    this.streak.visible = st < 1 && !!th.life?.includes('shooting');
+    this.streak.visible = st < 1 && !!th.shooting;
     if (this.streak.visible) {
       const { x: sx, y: sy } = this.streak.userData as { x: number; y: number };
       this.streak.position.set(sx + 1.8 * st, sy - 0.7 * st, -2.4);
@@ -221,11 +353,12 @@ export class Decor {
       const geo = new THREE.PlaneGeometry(W + 4, h);
       const uv = geo.attributes.uv as THREE.BufferAttribute;
       for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (W + 4) / TILE, (b.y0 + uv.getY(i) * h) / TILE);
-      const wall = this.add(new THREE.Mesh(geo, shared(`paper ${b.floor}`, () => new THREE.MeshStandardMaterial({ map: wallpaper(th.paper.motif, th.paper.colors), roughness: 0.95 }))));
+      const wall = this.add(new THREE.Mesh(geo, CLOTHED && th.cloth ? cloth(b.floor, th.cloth) : paper(b.floor, th.paper.motif, th.paper.colors)));
       wall.position.set(0, mid, WALL);
       wall.receiveShadow = true;
       for (const s of [-1, 1]) {
-        const side = this.add(new THREE.Mesh(new THREE.BoxGeometry(0.3, h, 2 * ROOM.z + 0.1), shared(`side ${b.floor}`, () => new THREE.MeshStandardMaterial({ color: th.side, roughness: 0.6 }))));
+        // the sides of the room in shadow: the room is a box of dark round its lamps
+        const side = this.add(new THREE.Mesh(new THREE.BoxGeometry(0.3, h, 2 * ROOM.z + 0.1), shared(`side ${b.floor}`, () => new THREE.MeshStandardMaterial({ color: new THREE.Color(th.side).multiplyScalar(0.35), roughness: 0.8 }))));
         side.position.set(s * (ROOM.x + 0.15), mid, 0);
         side.receiveShadow = true;
       }
@@ -237,12 +370,21 @@ export class Decor {
       back.renderOrder = -2;
       if (th.backdrop.stars) this.starry(th.backdrop.stars, b, b.floor);
     }
+    if (th.lamp) {
+      for (const f of layFixtures(th.lamp, b.y0, b.y1, seeded('lamps', b.floor, b.y0))) {
+        const { group, flame } = fixtureMesh(f);
+        this.add(group);
+        this.fixtures.push(f);
+        if (flame) this.flames.push({ f, flame });
+      }
+    }
   }
 
-  /** where two floors meet: under, the ceiling's moulding; over, the skirting board; out of the house, a ledge of stone */
+  /** where two floors meet: under, the ceiling's moulding; over, the skirting board; out of the house, a ledge of stone; two cloths, sewn together */
   private seam(below: Band, above: Band): void {
     const F = below.y1, a = theme(above.floor), u = theme(below.floor);
     if (u.paper.motif === 'none') return;
+    if (CLOTHED && u.cloth && a.cloth) { this.sew(F, a.cloth.colors[2]); return; }
     const strip = (y: number, h: number, d: number, color: string) => {
       const m = this.add(new THREE.Mesh(new THREE.BoxGeometry(W, h, d), shared(`trim ${color}`, () => new THREE.MeshStandardMaterial({ color, roughness: 0.7 }))));
       m.position.set(0, y, WALL + d / 2);
@@ -253,6 +395,23 @@ export class Decor {
     strip(F + 0.035, 0.07, 0.016, a.plank);
   }
 
+  /** a seam across the wall at height y: a fold in shadow, stitches over it in `thread` */
+  private sew(y: number, thread: string): void {
+    const fold = this.add(new THREE.Mesh(new THREE.BoxGeometry(W, 0.008, 0.004), shared('seam', () => new THREE.MeshStandardMaterial({ color: '#1a1410', roughness: 1 }))));
+    fold.position.set(0, y, WALL + 0.002);
+    const n = Math.floor(W / STITCH_EVERY), m = new THREE.InstancedMesh(STITCH, shared(`stitch ${thread}`, () => new THREE.MeshStandardMaterial({ color: thread, roughness: 0.8 })), n);
+    const o = new THREE.Object3D();
+    for (let i = 0; i < n; i++) {
+      o.position.set(-ROOM.x + (i + 0.5) * STITCH_EVERY, y, WALL + 0.004);
+      o.rotation.set(0, 0, 0.8);
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+    }
+    m.castShadow = m.receiveShadow = true;
+    this.add(m);
+    this.own.push(m);
+  }
+
   /** the stars of a sky, twinkling */
   private starry(n: number, b: Band, floor: number): void {
     const r = seeded('stars', floor, b.y0), pos = new Float32Array(3 * n), phase = new Float32Array(n);
@@ -260,29 +419,16 @@ export class Decor {
       pos.set([(r() - 0.5) * 12, b.y0 - 2 + r() * (b.y1 - b.y0 + 4), -2.6], 3 * i);
       phase[i] = r() * 6.28;
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute('phase', new THREE.BufferAttribute(phase, 1));
-    const m = new THREE.ShaderMaterial({
-      uniforms: { time: { value: 0 }, map: { value: DOT } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: /* glsl */ `
-        attribute float phase; uniform float time; varying float vA;
-        void main() {
-          vA = 0.55 + 0.45 * sin(time * (0.8 + fract(phase * 3.1)) + phase);
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = (18.0 + 14.0 * fract(phase * 7.3)) * (4.0 / -mv.z);
-          gl_Position = projectionMatrix * mv;
-        }`,
-      fragmentShader: /* glsl */ `
-        uniform sampler2D map; varying float vA;
-        void main() { gl_FragColor = vec4(vec3(1.0, 0.96, 0.88), vA) * texture2D(map, gl_PointCoord); }`,
-    });
-    const p = new THREE.Points(geo, m);
+    const at = new THREE.InstancedBufferAttribute(pos, 3), ph = instancedBufferAttribute(new THREE.InstancedBufferAttribute(phase, 1));
+    const m = new THREE.PointsNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: false });
+    // a star twinkles, brighter than white: it glows on an HDR screen and in the bloom
+    const glow = sin(clock.mul(fract(ph.mul(3.1)).add(0.8)).add(ph)).mul(0.45).add(0.55);
+    m.colorNode = vec4(vec3(1, 0.96, 0.88).mul(STAR_LIGHT), glow.mul(texture(DOT, uv()).a));
+    m.sizeNode = fract(ph.mul(7.3)).mul(14).add(18).mul(float(4).div(positionView.z.negate()));
+    const p = sprites(at, m);
     p.renderOrder = -1;
     this.add(p);
-    this.stars.push(m);
-    this.own.push(geo, m);
+    this.own.push(m);
   }
 
   /**
@@ -318,14 +464,13 @@ export class Decor {
   }
 
   /**
-   * What a section has on its walls and floors: the first of a floor tells
-   * its story; a rare one keeps a memory; the rest is filled at random, by
-   * the floor's theme. In the sky, things float at some distance instead.
+   * What a section has on its walls: the height gauge, a window now and then;
+   * a rare one opens on a memory. In the sky, clouds drift at some distance.
    */
   private furnish(s: Storey, seed: number, best: number): void {
     const th = theme(s.floor), r = seeded(seed, s.index, 'decor');
     const lo = s.bottom + 0.1, hi = s.ceiling !== undefined && s.above !== s.floor ? s.ceiling - 0.08 : s.top - 0.02;
-    const taken: Rect[] = [];
+    const taken: Rect[] = this.avoid.filter((q) => q.y1 > s.bottom && q.y0 < s.top);
     const house = th.paper.motif !== 'none';
     if (house && s.floor < GAUGED) {
       const { tex, w } = gauge(s.bottom, s.top, best);
@@ -340,50 +485,16 @@ export class Decor {
     const memory = house && !s.first && s.floor >= 1 && s.floor < GAUGED && r() < 0.11 ? MEMORIES[Math.floor(r() * MEMORIES.length)] : null;
     if (memory) this.memories.push({ index: s.index, y0: s.bottom, y1: s.top });
     if (!house) { this.sky(s, th, r); return; }
-    if (memory?.outside || r() < th.windows) this.window(s, th, r, lo, hi, taken, memory?.outside);
-    const things = [...(s.first ? th.story : []), ...(memory?.props ?? [])];
-    const pool = [...th.wall, ...th.wall, ...th.ground];
-    for (let n = 2 + Math.floor(r() * 3); n > 0 && pool.length; n--) things.push(pool[Math.floor(r() * pool.length)]);
-    let z = 0;
-    for (const name of new Set(things)) {
-      const a = art(name), at = a.ground ? this.onFloor(a.w, a.h, s.shelves, lo - 0.3, hi, taken, r) : this.onWall(a.w, a.h, lo, hi, taken, r);
-      if (!at) continue;
-      const m = this.add(new THREE.Mesh(PLANE, picture(name)));
-      m.scale.set(a.w, a.h, 1);
-      m.position.set(at[0], at[1], WALL + 0.004 + 0.0004 * z++);
-      m.receiveShadow = true;
-    }
-    if (th.life?.includes('spider') && r() < 0.6) {
-      const x = -0.45 + r() * 1.2, top = hi;
-      const body = this.add(new THREE.Mesh(PLANE, picture('spider')));
-      body.scale.set(0.04, 0.04, 1);
-      body.position.set(x, top - 0.3, WALL + 0.008);
-      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, top, WALL + 0.007), new THREE.Vector3(x, top - 0.3, WALL + 0.007)]);
-      const line = this.add(new THREE.Line(geo, shared('silk', () => new THREE.LineBasicMaterial({ color: '#d8d0c4', transparent: true, opacity: 0.6 }))));
-      this.own.push(geo);
-      this.spiders.push({ body, line, top, phase: r() * 6.28 });
-    }
+    // (the cloth has no windows: the room is told by its material and its light)
+    if (!CLOTHED && (memory || r() < th.windows)) this.window(s, th, r, lo, hi, taken, memory?.outside);
   }
 
-  /** where a thing of w × h can hang on the wall, away from what is there (its centre), if anywhere */
+  /** where a thing of w × h (a window) can hang on the wall, away from what is there (its centre), if anywhere */
   private onWall(w: number, h: number, lo: number, hi: number, taken: Rect[], r: () => number): [number, number] | null {
     for (let k = 0; k < 12; k++) {
       const x = -0.6 + w / 2 + r() * (1.42 - w), y = lo + h / 2 + r() * (hi - lo - h);
       const q = { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2 };
       if (hi - lo < h || overlaps(q, taken)) continue;
-      taken.push(q);
-      return [x, y];
-    }
-    return null;
-  }
-
-  /** where a thing of w × h can stand on a floor or shelf between lo and hi (its centre), if anywhere */
-  private onFloor(w: number, h: number, shelves: Shelf[], lo: number, hi: number, taken: Rect[], r: () => number): [number, number] | null {
-    const fit = shelves.filter((q) => q.mat !== 'chrome' && q.y >= lo && q.y + h <= hi + 0.1 && q.x1 - q.x0 > w + 0.06);
-    for (let k = 0; k < 8 && fit.length; k++) {
-      const s = fit[Math.floor(r() * fit.length)], x = s.x0 + 0.03 + w / 2 + r() * (s.x1 - s.x0 - w - 0.06), y = s.y + h / 2;
-      const q = { x0: x - w / 2, y0: s.y, x1: x + w / 2, y1: s.y + h };
-      if (overlaps(q, taken)) continue;
       taken.push(q);
       return [x, y];
     }
@@ -396,7 +507,8 @@ export class Decor {
     const o = view ?? th.outside;
     if (!at || !o) return;
     const [x, y] = at, plank = shared(`plank ${th.plank}`, () => new THREE.MeshStandardMaterial({ color: th.plank, roughness: 0.7 }));
-    const glass = this.add(new THREE.Mesh(PLANE, shared(`outside ${o.top} ${o.view}`, () => new THREE.MeshBasicMaterial({ map: outside(o), fog: false }))));
+    // the outside glows through the glass, brighter than the dim room: past white, the bloom takes it
+    const glass = this.add(new THREE.Mesh(PLANE, shared(`outside ${o.top} ${o.view}`, () => new THREE.MeshBasicMaterial({ map: outside(o), fog: false, color: new THREE.Color().setScalar(WINDOW_LIGHT) }))));
     glass.scale.set(w, h, 1);
     glass.position.set(x, y, WALL + 0.003);
     const bar = (bx: number, by: number, bw: number, bh: number, d = 0.02) => {
@@ -419,24 +531,22 @@ export class Decor {
     m.renderOrder = 1;
   }
 
-  /** in the sky, no walls: what the floor has floats at some distance, and things of the house drift by */
+  /** in the sky, no walls: the moon over the first section of its floor, clouds at some distance */
   private sky(s: Storey, th: Theme, r: () => number): void {
-    const things = [...(s.first ? th.story : []), ...Array.from({ length: 2 + Math.floor(r() * 2) }, () => th.wall[Math.floor(r() * th.wall.length)])];
-    const float = (name: string, faded: boolean) => {
-      const a = art(name), m = this.add(new THREE.Mesh(PLANE, picture(name, faded, s.floor)));
-      const z = name === 'moon' ? -2.4 : name === 'cloud' ? -1.3 - r() * 1.1 : -0.5 - r() * 1.6, y = s.bottom + r() * (s.top - s.bottom);
+    const things = [...(s.first && th.moon ? ['moon'] : []), ...Array.from({ length: th.clouds ?? 0 }, () => 'cloud')];
+    for (const name of things) {
+      const a = art(name), m = this.add(new THREE.Mesh(PLANE, picture(name, s.floor)));
+      const z = name === 'moon' ? -2.4 : -1.3 - r() * 1.1, y = s.bottom + r() * (s.top - s.bottom);
       m.scale.set(a.w * (name === 'cloud' ? 2 : 1.3), a.h * (name === 'cloud' ? 2 : 1.3), 1);
       m.position.set((r() - 0.5) * (2.4 - z), y, z);
       m.renderOrder = -1;
-      this.floats.push({ m, y, phase: r() * 6.28, spin: name === 'cloud' || name === 'moon' ? 0 : 0.12 });
-    };
-    for (const name of things) float(name, false);
-    if (th.life?.includes('memories')) for (let n = 1 + Math.floor(r() * 2); n > 0; n--) float(DRIFT[Math.floor(r() * DRIFT.length)], true);
+      this.floats.push({ m, y, phase: r() * 6.28, spin: 0 });
+    }
   }
 
   /** what drifts in the air around the camera at height y: its kind may change as it climbs */
   private drift(kind: Air, now: number, dt: number, y: number): void {
-    const A = AIRS[kind], m = this.air.material as THREE.PointsMaterial, p = this.motes;
+    const A = AIRS[kind], m = this.air.material as THREE.PointsNodeMaterial, p = this.motes;
     if (kind !== this.airKind) {
       this.airKind = kind;
       m.map = A.tex; m.color.set(A.color); m.size = A.size; m.blending = A.add ? THREE.AdditiveBlending : THREE.NormalBlending;
@@ -453,6 +563,6 @@ export class Decor {
       if (p[3 * i + 1] < y - 1.2 || p[3 * i + 1] > y + 1.2 || p[3 * i + 1] < -1e3) p[3 * i + 1] = A.vy >= 0 && p[3 * i + 1] > y ? y - 1.15 : A.vy < 0 && p[3 * i + 1] < y ? y + 1.15 : y + (Math.random() - 0.5) * 2.2;
       if (Math.abs(p[3 * i]) > ROOM.x) p[3 * i] = -Math.sign(p[3 * i]) * (ROOM.x - 0.01);
     }
-    this.air.geometry.attributes.position.needsUpdate = true;
+    this.moteAt.needsUpdate = true;
   }
 }

@@ -6,16 +6,18 @@
 // whole and new again). As the lace comes into a floor of the house (or of
 // the sky) for the first time, its card shows; a rare room plays its tune.
 
+import { Vector3 } from 'three/webgpu';
 import type { Event as LaceEvent, Lace } from './play/lace';
 import { FLOORS } from './gen/floors';
 import { advice } from './play/advice';
 import { chosen, reach } from './play/laces';
 import { Controls } from './play/controls';
-import { Rules, type RuleEvent } from './play/rules';
+import { BEAM, Rules, type RuleEvent } from './play/rules';
 import type { Climb } from './play/climb';
 import type { Level } from './level/level';
 import { LACE_NODES, regrown } from './sim/cords';
 import { World } from './sim/world';
+import { PLAY } from './tuning';
 import { sfx, wake } from './sound';
 import { CordsView } from './view/cordsView';
 import { Hud } from './view/hud';
@@ -39,7 +41,7 @@ export class Game {
   private time = 0;
   private started = false;
   private showHints = true;
-  /** seconds the lace has lain against other cords, gripping none */
+  /** seconds the lace has lain against other cords or itself, gripping none */
   private tangled = 0;
   /** how frayed the lace has been said to be: 0 not, 1 past half worn, 2 nearly through */
   private frayed = 0;
@@ -52,6 +54,8 @@ export class Game {
   /** the floor the lace is on (−1: not said yet), the rare rooms it has heard */
   private floor = -1;
   private heard = new Set<number>();
+  /** where the image is sharpest: the lace */
+  private subject = new Vector3();
 
   constructor(readonly climb: Climb) {
     this.overlay = new Overlay(this.stage.scene);
@@ -152,7 +156,7 @@ export class Game {
     this.world.update(this.time, dt);
     this.world.sim.step();
     for (const ev of lace.wear(dt)) if (ev.what === 'worn out') { sfx.slip(); this.hud.toast(`${END_NAMES[lace.ends.indexOf(ev.end)]} n'en peut plus et lâche !`, 1.4); }
-    if (++this.frame % 6 === 0) this.tangled = !lace.slipping && !lace.ends.some((e) => e.grip?.kind === 'cord') && lace.againstCords() ? this.tangled + 6 * dt : 0;
+    if (++this.frame % 6 === 0) this.tangled = !lace.slipping && !lace.ends.some((e) => e.grip?.kind === 'cord') && (lace.againstCords() || lace.againstItself()) ? this.tangled + 6 * dt : 0;
     if (this.state !== 'play') return;
     if (this.started) this.clock += dt;
     this.climb.track(lace.centre()[1], this.clock);
@@ -168,7 +172,8 @@ export class Game {
   /** the floor the lace is in: how fast its grips tire there; its name at the top; the first time, its card (and a lace found, now and then); a rare room's tune */
   private storey(y: number): void {
     const decor = this.scenery.decor, f = decor.floorAt(y);
-    this.lace.tiring = this.climb.tiring(y);
+    // in a searching lamp's beam, the grips tire faster
+    this.lace.tiring = this.climb.tiring(y) * (1 + PLAY.dazzle * this.rules.dazzle);
     if (f !== this.floor) {
       this.floor = f;
       this.hud.storey(FLOORS[f].name);
@@ -209,6 +214,8 @@ export class Game {
       const a = this.lace.anchor(ev.end)!;
       sfx.grip();
       this.overlay.burst(a[0], a[1], k);
+    } else if (ev.what === 'thrown') {
+      sfx.whip();
     } else if (ev.what === 'jolt') {
       if (ev.torn) { sfx.slip(); this.hud.toast(`Trop vite ! ${END_NAMES[k]} n'a pas pu te rattraper`, 1.6); }
       else this.hud.toast(`Choc ! ${END_NAMES[k]} y laisse ${Math.round(ev.cost * 100)} % de ses forces`, 1.4);
@@ -236,6 +243,12 @@ export class Game {
       case 'cut': sfx.slip(); this.hud.toast('Coupé ! Les fibres lâchent : encore un coup et il casse', 1.8); break;
       case 'burnt': sfx.slip(); this.hud.toast('Ça brûle ! Sors de la flamme', 1.4); break;
       case 'soaked': this.world.soak(); this.hud.toast('Trempé ! Le lacet rétrécit et s\'alourdit, le temps de sécher', 2); break;
+      case 'snapped': sfx.snap(); this.hud.toast('Le fil a cédé !', 1.6); break;
+      case 'stuck': sfx.stick(); this.hud.toast('Collé à la toile : tire d\'un coup sec pour t\'en arracher', 1.8); break;
+      case 'torn free': this.hud.toast('Arraché à la toile', 1); break;
+      case 'bitten': sfx.slip(); this.hud.toast('L\'araignée a mordu le lacet !', 1.6); break;
+      case 'seen': sfx.seen(); this.hud.toast('Dans la lumière ! Cache-toi derrière une barre', 1.4); break;
+      case 'lift': sfx.lift(); this.hud.toast('Le plomb tombe, et te hisse', 1.4); break;
     }
   }
 
@@ -247,6 +260,12 @@ export class Game {
     this.scenery.update(this.rules, this.world, this.time, dt);
     this.scenery.decor.update(performance.now() / 1000, dt, this.stage.y);
     this.stage.mood(this.scenery.decor.lightAt(this.stage.y));
+    this.stage.lights(this.scenery.decor.fixtures, performance.now() / 1000, this.subject.set(cx, cy, 0));
+    // the searching lamp nearest the lace lights the room for real (its shadows are where the lace hides)
+    let near = -1;
+    L.searches.forEach((q, k) => { if (Math.abs(q.y - cy) < 1.6 && (near < 0 || Math.abs(q.y - cy) < Math.abs(L.searches[near].y - cy))) near = k; });
+    this.stage.search(near < 0 ? null : { x: L.searches[near].x, y: L.searches[near].y, angle: this.rules.beams[near] ?? 0, half: BEAM.half });
+    this.cords.strain(this.world, this.rules);
     if (playing) this.storey(cy);
     // the camera follows the lace, a little ahead towards the pointer
     this.stage.follow(playing ? cx * 0.8 + p.x * 0.2 : cx, (playing ? cy * 0.8 + p.y * 0.2 : cy) + 0.1, Math.max(0.75, L.bottom + 0.75), L.top - 0.7, dt);
@@ -255,6 +274,7 @@ export class Game {
     this.hud.cards(this.lace);
     this.hud.hint(playing && this.showHints ? advice({ lace: this.lace, level: L, tangled: this.tangled, isOpen: (k) => this.rules.isOpen(k) }) : '');
     this.hud.update(dt);
-    this.stage.render();
+    // sharp round the lace, the rest of the room softening away from it
+    this.stage.render(this.subject.set(cx, cy, 0));
   }
 }

@@ -13,7 +13,7 @@
 // A level is plain data: the course is made of sections, each a level of
 // its own, merged into the one that is built.
 
-export type Mat = 'wood' | 'chrome' | 'rubber' | 'gold' | 'wall' | 'floor' | 'eyelet' | 'gate';
+export type Mat = 'wood' | 'chrome' | 'rubber' | 'gold' | 'wall' | 'floor' | 'eyelet' | 'gate' | 'hook' | 'wire' | 'brass';
 
 /**
  * What a surface is made of: its friction, how an end grips it (× the stamina
@@ -28,6 +28,12 @@ export const MATS: Record<Mat, { mu: number; grip: number; wear: number; color: 
   floor: { mu: 0.5, grip: 0, wear: 0.5, color: '#8a5a33', metalness: 0, roughness: 0.8 },
   eyelet: { mu: 0.15, grip: 0, wear: 0.8, color: '#c7ccd2', metalness: 1, roughness: 0.25 },
   gate: { mu: 0.3, grip: 0, wear: 0.6, color: '#5a6b7c', metalness: 0.3, roughness: 0.5 },
+  // a coat hook: black iron, rough enough that the lace hangs over it, nothing an end can grip
+  hook: { mu: 0.7, grip: 0, wear: 0.5, color: '#8a7a68', metalness: 0.8, roughness: 0.4 },
+  // the taut wire of a zip line: thin, slippery
+  wire: { mu: 0.12, grip: 0, wear: 0.3, color: '#9aa0a6', metalness: 1, roughness: 0.3 },
+  // the hand of a clock: it can be gripped, and carries what grips it round
+  brass: { mu: 0.4, grip: 1, wear: 0.6, color: '#b8913a', metalness: 0.9, roughness: 0.35 },
 };
 
 /** half the width of the room, half its depth */
@@ -37,8 +43,8 @@ export type Vec2 = [number, number];
 /** a bar across the room; a gold one is a post, where the lace saves its progress */
 export interface Bar { x: number; y: number; r: number; mat: Mat }
 export interface Shelf { x0: number; x1: number; y: number; mat?: Mat }
-/** a cord hanging from a hook */
-export interface Hang { x: number; top: number; length: number }
+/** a cord hanging from a hook; `fragile`: a thread that snaps once it has borne the lace this long (s) */
+export interface Hang { x: number; top: number; length: number; fragile?: number }
 /**
  * An eyelet the lace can be threaded through, a ring of radius r whose axis
  * turns `turn` (rad) from x towards z: 0, a hole facing sideways (seen edge on),
@@ -74,7 +80,33 @@ export interface Line { x0: number; y0: number; x1: number; y1: number; slack: n
  * too or hanging free. With two cols and `ladder`, a rope ladder: the rungs
  * span the rails, and are stiff.
  */
-export interface Net { x0: number; x1: number; top: number; bottom: number; cols: number; rows: number; tied?: boolean; color?: string; ladder?: boolean }
+export interface Net { x0: number; x1: number; top: number; bottom: number; cols: number; rows: number; tied?: boolean; color?: string; ladder?: boolean; sticky?: boolean }
+/**
+ * Air on the move in a box from (x0, y0) to (x1, y1), at (vx, vy) m/s: the
+ * warm air over a radiator rises, a vent blows across. `period`: it comes
+ * in gusts, blowing half the time (always, if not said).
+ */
+export interface Wind { x0: number; y0: number; x1: number; y1: number; vx: number; vy: number; period?: number; phase?: number }
+/**
+ * A lamp at (x, y) that sweeps the room: its beam turns `arc` (rad) either
+ * way of straight down, there and back in `period` s. The lace in its light
+ * (not in the shadow of a bar or a shelf) heats: its grips tire fast.
+ */
+export interface Search { x: number; y: number; arc: number; period: number; phase: number }
+/** a zip line: a taut wire from (x0, y0) down to (x1, y1), a spool on it that runs down with what hangs from it */
+export interface Zip { x0: number; y0: number; x1: number; y1: number }
+/** a clock: its hand, `length` long, turns round (x, y) once in |period| s (negative: backwards), from `phase` (rad) */
+export interface Clock { x: number; y: number; length: number; period: number; phase: number }
+/** a coat hook sticking out of the wall at (x, y), its tip turned up: nothing grips it, the lace hangs over it */
+export interface Hook { x: number; y: number }
+/**
+ * A lift: a cord over a pulley (bar `bar`, chrome), a lead weight at one
+ * end, `weight` × the lace's weight, held up by a catch; a wooden handle at
+ * the other end, hanging `drop` below the pulley on side `side` (1 right, −1
+ * left). Gripping the handle lets the catch go: the weight falls and hoists
+ * the lace, faster and faster, until the handle knocks against the pulley.
+ */
+export interface Lift { bar: number; drop: number; weight: number; side: number }
 /** words of help, shown while the lace is within r of (x, y) (and its gate, if any, is shut) */
 export interface Tip { x: number; y: number; r: number; text: string; gate?: number }
 
@@ -94,6 +126,12 @@ export interface Level {
   nets: Net[];
   movers: Mover[];
   hazards: Hazard[];
+  winds: Wind[];
+  searches: Search[];
+  zips: Zip[];
+  clocks: Clock[];
+  hooks: Hook[];
+  lifts: Lift[];
   buttons: Vec2[];
   tips: Tip[];
   /** where the lace starts: lying on the floor */
@@ -107,6 +145,7 @@ export function emptyLevel(bottom = 0, top = 0): Level {
   return {
     bottom, top,
     bars: [], shelves: [], hangs: [], rings: [], gates: [], pulls: [], skeins: [], drapes: [], lines: [], nets: [], movers: [], hazards: [],
+    winds: [], searches: [], zips: [], clocks: [], hooks: [], lifts: [],
     buttons: [], tips: [],
     start: { x0: -0.55, x1: 0.55, y: 0.01 },
   };
@@ -131,6 +170,12 @@ export function merge(parts: Level[]): Level {
     L.nets.push(...p.nets);
     L.buttons.push(...p.buttons);
     L.hazards.push(...p.hazards);
+    L.winds.push(...p.winds);
+    L.searches.push(...p.searches);
+    L.zips.push(...p.zips);
+    L.clocks.push(...p.clocks);
+    L.hooks.push(...p.hooks);
+    L.lifts.push(...p.lifts.map((l) => ({ ...l, bar: l.bar + bars })));
     L.drapes.push(...p.drapes.map((d) => ({ ...d, bar: d.bar + bars })));
     L.movers.push(...p.movers.map((m) => ({ ...m, bar: m.bar + bars })));
     L.gates.push(...p.gates.map((g) => ({

@@ -1,11 +1,14 @@
 // The cords of a world as tubes, and the knobs at the end of its pulls. Built
 // with the world, dropped with it.
 
-import * as THREE from 'three';
-import { TubeMesh, TubeNodes, TubeSync } from '@drschizzo/three-cable-tubes';
+import * as THREE from 'three/webgpu';
+import { TubeMesh, TubeNodes, TubeSync } from '@drschizzo/three-cable-tubes/webgpu';
 import type { World } from '../sim/world';
+import type { Rules } from '../play/rules';
+
+const glow = new THREE.Color();
 import { chosen } from '../play/laces';
-import { laceMaterial } from './laceMaterial';
+import { frayed, laceMaterial } from './laceMaterial';
 
 /** the stripe of the lace's braid: the lace chosen's */
 const stripe = new THREE.Color();
@@ -26,6 +29,7 @@ export class CordsView {
     stripe.set(chosen().stripe);
     this.nodes = new TubeNodes(sim.n);
     this.tubes = new TubeMesh(sim.n - sim.cables.length, material, this.nodes, { radial: 16, sub: 8 });
+    frayed(this.tubes);
     const color = new THREE.Color();
     let at = 0;
     sim.cables.forEach((cb, c) => {
@@ -48,6 +52,15 @@ export class CordsView {
   /** node i glows with colour c (black: not at all) */
   tint(i: number, c: THREE.Color): void {
     this.nodes.tint(i, c);
+  }
+
+  /** the fragile threads redden as they wear towards snapping */
+  strain(world: World, rules: Rules): void {
+    for (const [k, ci] of world.threadCable) {
+      const w = rules.threadWear(k), cb = world.sim.cables[ci];
+      glow.setRGB(0.5 * w * w, 0.05 * w, 0);
+      for (let i = cb.start; i < cb.start + cb.count; i++) this.nodes.tint(i, glow);
+    }
   }
 
   /** the tubes where the nodes are now, the lace as worn as it is */

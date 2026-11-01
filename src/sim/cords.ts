@@ -20,6 +20,10 @@ export interface Cord {
   pinLast: boolean;
   /** the pull it is, if any: its first node is held by a stiff spring, which feels what hangs on it */
   pull?: number;
+  /** the fragile thread it is (the index of its hang): it snaps under the lace */
+  fragile?: number;
+  /** a strand of a cobweb: the lace sticks to it */
+  sticky?: boolean;
 }
 
 /** the cords of a level: the lace first (cable 0), then the others; knots tie a node of a cord to a node of another */
@@ -96,7 +100,11 @@ export function cordsOf(L: Level, lace: ArrayLike<number> | null, seed: number):
   add(lace ? Array.from(lace) : lyingLace(L), { key: 'lace', color: chosen().color, tag: BRAIDED, segment: LACE.segment },
     { radius: LACE.radius, mass: LACE.mass, bend: LACE.bend, endMass: LACE.endMass, boot: true });
 
-  for (const h of L.hangs) add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `hang ${placeKey(h.x, h.top)}`, color: '#a8865a', pinFirst: true });
+  L.hangs.forEach((h, k) => {
+    // a thread of cotton, thin and pale, for one that gives way
+    if (h.fragile) add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `thread ${placeKey(h.x, h.top)}`, color: '#e9e0cc', pinFirst: true, fragile: k }, { radius: 0.0045, mass: 0.0012 });
+    else add(straight(h.x, h.top, 0, h.x, h.top - h.length, 0), { key: `hang ${placeKey(h.x, h.top)}`, color: '#a8865a', pinFirst: true });
+  });
   for (const k of L.skeins) {
     // loops of yarn hanging from one hook, each its width and its depth, weaving over and under one another
     for (let j = 0; j < k.count; j++) {
@@ -121,13 +129,14 @@ export function cordsOf(L: Level, lace: ArrayLike<number> | null, seed: number):
   for (const l of L.lines) add(sagging(l.x0, l.y0, l.x1, l.y1, l.slack), { key: `line ${placeKey(l.x0, l.y0)}`, color: l.color ?? '#e8e2d0', pinFirst: true, pinLast: true });
   for (const n of L.nets) {
     // the cords down at the back, those across in front, touching: knotted where they cross
-    const zDown = -(VINE.radius + 0.0005), zAcross = VINE.radius + 0.0005, seg = VINE.segment, color = n.color ?? '#c8a46a';
+    const zDown = -(VINE.radius + 0.0005), zAcross = VINE.radius + 0.0005, seg = VINE.segment, color = n.color ?? (n.sticky ? '#d8d4cc' : '#c8a46a');
+    const silk = n.sticky ? { radius: 0.0035, mass: 0.0008, bend: 0.15 } : {};
     const xs = Array.from({ length: n.cols }, (_, i) => n.x0 + ((n.x1 - n.x0) * i) / (n.cols - 1));
     const ys = Array.from({ length: n.rows }, (_, j) => n.bottom + 0.06 + ((n.top - n.bottom - 0.16) * j) / Math.max(1, n.rows - 1));
-    const down = xs.map((x) => add(straight(x, n.top, zDown, x, n.bottom, zDown), { key: `net ${placeKey(x, n.top)}`, color, pinFirst: true, pinLast: !!n.tied }));
+    const down = xs.map((x) => add(straight(x, n.top, zDown, x, n.bottom, zDown), { key: `net ${placeKey(x, n.top)}`, color, pinFirst: true, pinLast: !!n.tied, sticky: n.sticky }, silk));
     const reach = n.ladder ? 0 : 0.04;
     for (const y of ys) {
-      const across = add(straight(n.x0 - reach, y, zAcross, n.x1 + reach, y, zAcross), { key: `net ${placeKey(n.x0, y)}`, color }, { bend: n.ladder ? 40 : VINE.bend });
+      const across = add(straight(n.x0 - reach, y, zAcross, n.x1 + reach, y, zAcross), { key: `net ${placeKey(n.x0, y)}`, color, sticky: n.sticky }, { bend: n.ladder ? 40 : VINE.bend, ...silk });
       const count = set.defs[across].points.length / 3;
       xs.forEach((x, i) => set.knots.push([down[i], Math.round((n.top - y) / seg), across, Math.round(((x - n.x0 + reach) / (n.x1 - n.x0 + 2 * reach)) * (count - 1))]));
     }

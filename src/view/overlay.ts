@@ -6,11 +6,12 @@
 // green while it rests, an end about to grip, the aglet slipping through the
 // cords, a flash where the lace is hurt and a throb where it is worn deep.
 
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import type { End } from '../play/lace';
 import type { World } from '../sim/world';
 import { LACE, PLAY } from '../tuning';
 import type { CordsView } from './cordsView';
+import { tsl } from './tsl';
 
 /** the two ends, each its colour: the head (left button) and the tail (right button) */
 export const END_COLORS = ['#ff8a3d', '#3d9bff'].map((c) => new THREE.Color(c));
@@ -59,25 +60,23 @@ class Label {
   }
 }
 
-/** a ring gauge facing us: how much grip an end has left */
-function gauge(scene: THREE.Scene, c: THREE.Color): THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial> {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.075, 0.075), new THREE.ShaderMaterial({
-    uniforms: { fill: { value: 1 }, col: { value: c.clone() } },
-    transparent: true, depthTest: false,
-    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: /* glsl */ `
-      uniform float fill; uniform vec3 col; varying vec2 vUv;
-      void main() {
-        vec2 p = vUv * 2.0 - 1.0; float r = length(p);
-        if (r < 0.68 || r > 1.0) discard;
-        float t = fract(atan(p.x, p.y) / 6.2831853 + 1.0);
-        float edge = smoothstep(1.0, 0.94, r) * smoothstep(0.68, 0.74, r);
-        gl_FragColor = vec4(t < fill ? col : vec3(0.12), 0.92 * edge);
-      }`,
-  }));
-  m.renderOrder = 3;
-  scene.add(m);
-  return m;
+const { atan, float, fract, length, select, smoothstep, uniform, uv, vec3, vec4 } = tsl;
+
+/** a ring gauge facing us: how much grip an end has left (`fill`, 0 to 1), in its colour (`col`) */
+interface Gauge { mesh: THREE.Mesh; fill: { value: number }; col: { value: THREE.Color } }
+
+function gauge(scene: THREE.Scene, c: THREE.Color): Gauge {
+  const fill = uniform(1), col = uniform(c.clone());
+  const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthTest: false });
+  const p = uv().mul(2).sub(1), r = length(p);
+  const t = fract(atan(p.x, p.y).div(2 * Math.PI).add(1));
+  const edge = smoothstep(1, 0.94, r).mul(smoothstep(0.68, 0.74, r));
+  m.colorNode = vec4(select(t.lessThan(fill), col, vec3(0.12)), 1);
+  m.opacityNode = float(0.92).mul(edge);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.075, 0.075), m);
+  mesh.renderOrder = 3;
+  scene.add(mesh);
+  return { mesh, fill, col };
 }
 
 /** a flat mesh drawn over everything */
@@ -90,7 +89,7 @@ function marker<T extends THREE.Mesh | THREE.Line>(scene: THREE.Scene, m: T, ord
 export class Overlay {
   private aglets: THREE.Mesh[];
   private eyes: THREE.Group[];
-  private gauges: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[];
+  private gauges: Gauge[];
   private loads: Label[];
   private targets: THREE.Mesh[];
   private hints: Label[];
@@ -218,10 +217,10 @@ export class Overlay {
   private grip(e: End, k: number, a: [number, number, number] | null, p: [number, number, number], playing: boolean): void {
     const g = this.gauges[k], l = this.loads[k];
     const resting = e.grip?.kind === 'surface' && e.load < PLAY.restLoad;
-    g.visible = playing && (!!a || e.stamina < 0.999);
-    g.position.set(a ? a[0] : p[0], a ? a[1] : p[1], 0.06);
-    g.material.uniforms.fill.value = e.stamina;
-    g.material.uniforms.col.value.copy(resting ? GREEN : e.stamina < 0.35 ? RED : END_COLORS[k]);
+    g.mesh.visible = playing && (!!a || e.stamina < 0.999);
+    g.mesh.position.set(a ? a[0] : p[0], a ? a[1] : p[1], 0.06);
+    g.fill.value = e.stamina;
+    g.col.value.copy(resting ? GREEN : e.stamina < 0.35 ? RED : END_COLORS[k]);
     l.sprite.visible = playing && !!e.grip && !!a;
     if (!e.grip || !a) return;
     l.sprite.position.set(a[0], a[1] + 0.065, 0.07);

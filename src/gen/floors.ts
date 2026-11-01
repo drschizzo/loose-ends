@@ -1,18 +1,18 @@
 // The floors the climb goes through: a house, then the sky, for ever.
 //
-// The lace is the lace of a pair of shoes left by the door. The house it
-// climbs is the house of an old couple, emptied after they are gone: never
-// said, only seen. Cartons « à donner », a mirror under a sheet, a calendar
-// stopped long ago, the laundry dry for ever on its line, the bed made. A red
-// thread runs up the wall from floor to floor; out of the attic it turns to
-// light, and at dawn it ends in a bow. Above, the sky does not end.
+// The lace was one of a pair, and it has lost the other. It climbs alone to
+// find it, through every room of the house and on into the sky, after the
+// red thread that runs up the walls: the thread said to tie together two who
+// belong together. Out of the attic the thread turns to light; at dawn it
+// ends in a knot, the other is near; above, the sky does not end, and every
+// morning it is a little nearer.
 //
 // A floor is chosen per stretch of course (from post to post): it changes on
 // a post, when the lace has just been saved, so that a new floor comes as a
 // reward. Which floor, follows the time a good player would have taken to get
 // there (see `STORY` in tuning.ts): the house lasts some fifty minutes.
 // A floor also leans the course its way: the laundry has more lines, the
-// sewing room more skeins and eyelets.
+// sewing room more skeins and eyelets (`favours`, in catalog.json).
 
 export interface Floor {
   /** what the card says when the lace comes into it */
@@ -21,28 +21,26 @@ export interface Floor {
   line: string;
   /** above the house: no walls */
   sky?: boolean;
-  /** parts the floor has more of (× their weight), by name */
-  favours?: Record<string, number>;
 }
 
 export const FLOORS: Floor[] = [
-  { name: 'L\'entrée', line: 'Ses chaussures attendent près de la porte.', favours: { barres: 1.5 } },
-  { name: 'La penderie', line: 'Tout sent encore la lavande.', favours: { 'rideau de cordes': 3, 'fils posés': 1.5 } },
-  { name: 'La chambre des petits', line: 'Les dessins sont restés au mur.', favours: { 'échelle de corde': 3, filet: 2, chicanes: 2 } },
-  { name: 'L\'atelier', line: 'Le tricot attend sa dernière rangée.', favours: { écheveau: 3, ciseaux: 2, œillets: 2, 'œillets croisés': 2, 'colonne d\'œillets': 2 } },
-  { name: 'La buanderie', line: 'Le linge a séché depuis longtemps.', favours: { 'fils à linge': 3, cascade: 3, traversée: 1.5 } },
-  { name: 'Le salon', line: 'Les lunettes gardent la page.', favours: { 'barres mobiles': 2, bougies: 2.5, pendule: 2 } },
-  { name: 'La chambre', line: 'Le lit est fait.', favours: { 'fils posés': 2, tirette: 2, 'deux tirettes': 2 } },
-  { name: 'Le grenier', line: 'Ici, on a rangé les étés.', favours: { 'forêt de lianes': 2.5, filet: 2, 'corde lisse': 2 } },
-  { name: 'Le toit', line: 'La nuit tombe doucement.', favours: { 'corde lisse': 2, pendule: 2, 'escalier de chrome': 2 } },
+  { name: 'L\'entrée', line: 'Un lacet tout seul. L\'autre doit être plus haut.' },
+  { name: 'La penderie', line: 'Des paires partout. Pas la sienne.' },
+  { name: 'La chambre des petits', line: 'Ici, on apprend à faire ses lacets.' },
+  { name: 'L\'atelier', line: 'Un fil rouge mène quelque part.' },
+  { name: 'La buanderie', line: 'Même les chaussettes finissent par se retrouver.' },
+  { name: 'Le salon', line: 'On l\'a vu filer vers le haut.' },
+  { name: 'La chambre', line: 'Deux oreillers, côte à côte.' },
+  { name: 'Le grenier', line: 'La lucarne est ouverte.' },
+  { name: 'Le toit', line: 'Le fil continue dans le ciel.' },
   // the sky: where the climb is « up »
-  { name: 'La nuit', line: 'Il y a tant d\'étoiles, d\'ici.', sky: true, favours: { pendule: 2, 'fils posés': 1.5 } },
-  { name: 'L\'aube', line: 'Le jour se lève quand même.', sky: true, favours: { 'fils à linge': 2, filet: 1.5 } },
+  { name: 'La nuit', line: 'Quelque part, l\'autre voit les mêmes étoiles.', sky: true },
+  { name: 'L\'aube', line: 'Le fil se noue. L\'autre n\'est plus loin.', sky: true },
   // then, for ever, round these
-  { name: 'Les nuages', line: 'On y voit des formes connues.', sky: true },
+  { name: 'Les nuages', line: 'On y voit des formes qui vont par deux.', sky: true },
   { name: 'Le grand ciel', line: 'Plus rien ne pèse.', sky: true },
-  { name: 'Les étoiles', line: 'Une de plus, ce soir.', sky: true },
-  { name: 'Le matin', line: 'Et tout recommence.', sky: true },
+  { name: 'Les étoiles', line: 'Deux étoiles, tout près l\'une de l\'autre.', sky: true },
+  { name: 'Le matin', line: 'Chaque jour un peu plus près.', sky: true },
 ];
 
 /** floors 0 to HOUSE − 1 are the house; HOUSE is the sky */

@@ -34,5 +34,15 @@ export const sfx = {
   floor: () => [262, 330, 392, 523].forEach((f, k) => tone(f, 2.2, 'sine', 0.035, 1, k * 0.18)),
   /** a memory: a few notes of a music box */
   memory: () => [1047, 1319, 1568, 1319, 1175, 1047].forEach((f, k) => tone(f, 0.9, 'sine', 0.025, 1, k * 0.32)),
+  /** the end whipped up: a short swish */
+  whip: () => tone(700, 0.12, 'triangle', 0.035, 2.2),
+  /** a thread snaps: a dry twang */
+  snap: () => { tone(1800, 0.06, 'square', 0.04, 0.3); tone(320, 0.25, 'triangle', 0.05, 0.5, 0.02); },
+  /** stuck in a web: a soft, low stretch */
+  stick: () => tone(140, 0.4, 'sine', 0.05, 1.4),
+  /** caught in a beam: a low, uneasy hum */
+  seen: () => { tone(98, 0.9, 'sawtooth', 0.025, 1.02); tone(104, 0.9, 'sawtooth', 0.02, 0.98); },
+  /** a lift's catch lets go: a clunk, the pulley whirs */
+  lift: () => { tone(110, 0.12, 'square', 0.06, 0.6); tone(600, 0.8, 'triangle', 0.02, 1.6, 0.1); },
   win: () => [392, 523, 659, 784, 1047, 1319].forEach((f, k) => tone(f, 0.5, 'triangle', 0.07, 1, k * 0.1)),
 };

@@ -9,10 +9,13 @@
 // the floor's look; the rest keeps its own, the same on every floor, so that
 // what can be gripped is always told at a glance.
 
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import type { Storey } from '../gen/course';
 import { MATS, ROOM, type Level, type Mat, type Ring } from '../level/level';
-import { ringFrame } from '../level/surfaces';
+import { HAND, HANDLE, handleAt, ringFrame, SPOOL, spoolAt } from '../level/surfaces';
+import { BEAM } from '../play/rules';
+import { art } from './paint';
+import { tsl } from './tsl';
 import type { Rules } from '../play/rules';
 import type { World } from '../sim/world';
 import { PLAY } from '../tuning';
@@ -29,8 +32,55 @@ const PIN = new THREE.MeshStandardMaterial({ color: '#8d8f93', metalness: 0.9, r
 const HOLE = new THREE.MeshStandardMaterial({ color: '#2a1e18' });
 /** what harms the lace: blades, flames, water */
 const BLADE = new THREE.MeshStandardMaterial({ color: '#3b3f45', metalness: 0.9, roughness: 0.25 });
-const FLAME = new THREE.MeshBasicMaterial({ color: '#ff8a1e', transparent: true, opacity: 0.85 });
+// (a flame is brighter than white: it glows)
+const FLAME = new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 1.6, 0.35), transparent: true, opacity: 0.9 });
 const WATER = new THREE.MeshBasicMaterial({ color: '#4aa3ff', transparent: true, opacity: 0.35, depthWrite: false });
+/** the new things: a coat hook, a zip line's spool, a lamp's shade and its beam (past white), a lift's weight and handle, a radiator, a vent, the draughts */
+const HOOK_SHAFT = new THREE.CylinderGeometry(0.009, 0.009, 0.15, 12).rotateX(Math.PI / 2);
+const HOOK_TIP = new THREE.SphereGeometry(0.011, 12, 8).scale(1, 3.2, 1);
+const HOOK_PLATE = new THREE.CylinderGeometry(0.024, 0.024, 0.008, 18).rotateX(Math.PI / 2);
+const SPOOL_CORE = new THREE.CylinderGeometry(SPOOL.r, SPOOL.r, 0.1, 18);
+const SPOOL_FLANGE = new THREE.CylinderGeometry(SPOOL.r * 1.6, SPOOL.r * 1.6, 0.008, 18);
+const SEARCH_SHADE = new THREE.CylinderGeometry(0.02, 0.045, 0.07, 20, 1, true).translate(0, -0.012, 0);
+const BEAM_BULB = new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 5.4, 4.2), side: THREE.DoubleSide });
+/** the beam: a haze of light, soft at its edges (where the cone is seen edge on), fading as it goes */
+const BEAM_CONE = (() => {
+  const { abs, dot, normalView, positionView, pow, uniform, uv } = tsl;
+  const m = new THREE.MeshBasicNodeMaterial({ color: '#fff2d8', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+  const strength = uniform(0.08);
+  m.opacityNode = strength.mul(pow(abs(dot(normalView, positionView.normalize())), 2.5)).mul(pow(uv().y, 1.6));
+  m.userData.strength = strength;
+  return m;
+})();
+const LIFT_WEIGHT = new THREE.CylinderGeometry(0.022, 0.026, 0.055, 16);
+const LIFT_HANDLE = new THREE.CylinderGeometry(HANDLE.r, HANDLE.r, 0.1, 12);
+const LIFT_CORD = new THREE.CylinderGeometry(0.0035, 0.0035, 1, 6).translate(0, -0.5, 0);
+const LIFT_ROPE = new THREE.MeshStandardMaterial({ color: '#8a6a48', roughness: 0.9 });
+const LEAD = new THREE.MeshStandardMaterial({ color: '#4a4c50', metalness: 0.6, roughness: 0.55 });
+const RADIATOR_FIN = new THREE.BoxGeometry(0.022, 0.2, 0.05);
+const RADIATOR = new THREE.MeshStandardMaterial({ color: '#cfc6b4', metalness: 0.3, roughness: 0.6 });
+const VENT = new THREE.MeshStandardMaterial({ color: '#3a3a3a', metalness: 0.6, roughness: 0.5 });
+const STREAK_UP = new THREE.PlaneGeometry(0.004, 0.12);
+const STREAK_ACROSS = new THREE.PlaneGeometry(0.12, 0.004);
+const STREAK = new THREE.MeshBasicMaterial({ color: '#e8eef8', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+const SILK = new THREE.MeshBasicMaterial({ color: '#d8d0c4', transparent: true, opacity: 0.7 });
+const PLANE_1 = new THREE.PlaneGeometry(1, 1);
+/** the face of a clock: cream, its hours marked */
+let face: THREE.MeshStandardMaterial | null = null;
+function clockFace(): THREE.MeshStandardMaterial {
+  if (face) return face;
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#e8dcc0'; g.beginPath(); g.arc(128, 128, 126, 0, 7); g.fill();
+  g.strokeStyle = '#3a2a1a'; g.lineWidth = 6; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke();
+  g.fillStyle = '#2a2018';
+  for (let h = 0; h < 12; h++) { const a = (h / 12) * Math.PI * 2; g.save(); g.translate(128 + 100 * Math.sin(a), 128 - 100 * Math.cos(a)); g.rotate(a); g.fillRect(-3, -10, 6, h % 3 ? 12 : 20); g.restore(); }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return (face = new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }));
+}
+
 /** the marks that tie a trapdoor to its key */
 const MARK = new THREE.CircleGeometry(0.014, 20);
 const MARKS = ['#2fd3c4', '#e04fd3', '#f2e14e', '#7a6cff'].map((c) => new THREE.MeshBasicMaterial({ color: c }));
@@ -56,6 +106,13 @@ export class Scenery {
   /** the switch box of each pull, which lights when it clicks */
   readonly pulls: THREE.Mesh[] = [];
   readonly decor: Decor;
+  /** what moves of the new things: the spools, the clock hands, the lamps' heads and beams, the weights and handles of the lifts, the draughts, the spider */
+  private spools: THREE.Group[] = [];
+  private hands: THREE.Mesh[] = [];
+  private searchHeads: { head: THREE.Group; beam: THREE.Mesh }[] = [];
+  private lifts: { weight: THREE.Mesh; handle: THREE.Mesh; cords: THREE.Mesh[] }[] = [];
+  private draughts: { wind: number; streaks: THREE.Mesh[] }[] = [];
+  private spider: THREE.Group | null = null;
 
   /** the scenery of level L, the window of the course whose sections are `storeys` (course `seed`); `best`: the highest the lace has been */
   constructor(scene: THREE.Scene, L: Level, storeys: Storey[], seed: number, best: number) {
@@ -64,7 +121,12 @@ export class Scenery {
       this.group.add(m);
       return m;
     };
-    this.decor = new Decor(this.group, storeys, seed, L.bottom, L.top, best);
+    // the wall behind a clock and over a radiator is the level's: the decor hangs nothing there
+    const avoid = [
+      ...L.clocks.map((c) => ({ x0: c.x - c.length - 0.06, y0: c.y - c.length - 0.06, x1: c.x + c.length + 0.06, y1: c.y + c.length + 0.06 })),
+      ...L.winds.filter((w) => Math.abs(w.vy) > Math.abs(w.vx)).map((w) => ({ x0: w.x0, y0: w.y0 - 0.25, x1: w.x1, y1: w.y0 + 0.05 })),
+    ];
+    this.decor = new Decor(this.group, storeys, seed, L.bottom, L.top, best, avoid);
     const skin = (y: number) => theme(this.decor.floorAt(y));
     if (L.bottom <= 0) add(new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 2), FLOOR)).position.set(0, -0.15, 0.5);
 
@@ -118,6 +180,8 @@ export class Scenery {
       this.hazards.push({ kind: h.kind, parts });
     }
 
+    this.things(L, add);
+
     // each trapdoor and what opens it wear the same mark: a dot of one colour, on the glass side
     L.gates.forEach((g, k) => {
       const mat = MARKS[k % MARKS.length];
@@ -154,6 +218,134 @@ export class Scenery {
     scene.add(this.group);
   }
 
+  /** the hooks, the zip lines, the clocks, the searching lamps, the lifts, the draughts, the spider of the webs */
+  private things(L: Level, add: <T extends THREE.Object3D>(m: T, shadows?: boolean) => T): void {
+    for (const h of L.hooks) {
+      const g = add(new THREE.Group());
+      const shaft = new THREE.Mesh(HOOK_SHAFT, MAT.hook), tip = new THREE.Mesh(HOOK_TIP, MAT.hook), plate = new THREE.Mesh(HOOK_PLATE, MAT.hook);
+      shaft.position.set(0, 0, -0.03); tip.position.set(0, 0.018, 0.055); tip.rotation.x = 0.7; plate.position.set(0, 0, -ROOM.z + 0.003);
+      for (const m of [shaft, tip, plate]) { m.castShadow = m.receiveShadow = true; g.add(m); }
+      g.position.set(h.x, h.y, 0);
+    }
+    for (const z of L.zips) {
+      const dx = z.x1 - z.x0, dy = z.y1 - z.y0, l = Math.hypot(dx, dy);
+      const wire = add(new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, l, 6), MAT.wire));
+      wire.position.set((z.x0 + z.x1) / 2, (z.y0 + z.y1) / 2, 0);
+      wire.rotation.z = Math.atan2(dy, dx) - Math.PI / 2;
+      for (const [x, y] of [[z.x0, z.y0], [z.x1, z.y1]]) add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.2), MAT.hook)).position.set(x, y, -0.02);
+      const spool = add(new THREE.Group());
+      const core = new THREE.Mesh(SPOOL_CORE, wood('#8a5a33')), block = new THREE.Mesh(new THREE.BoxGeometry(0.012, SPOOL.below + 0.01, 0.012), MAT.hook);
+      core.rotation.x = Math.PI / 2;
+      block.position.set(0, SPOOL.below / 2, 0);
+      spool.add(core, block);
+      for (const zz of [-0.05, 0.05]) { const f = new THREE.Mesh(SPOOL_FLANGE, wood('#6b4428')); f.rotation.x = Math.PI / 2; f.position.z = zz; spool.add(f); }
+      for (const c of spool.children) c.castShadow = true;
+      const p = spoolAt(z, 0);
+      spool.position.set(p.x, p.y, 0);
+      this.spools.push(spool);
+    }
+    for (const c of L.clocks) {
+      const face = add(new THREE.Mesh(new THREE.CircleGeometry(c.length + 0.05, 48), clockFace()), false);
+      face.position.set(c.x, c.y, -ROOM.z + 0.002);
+      face.receiveShadow = true;
+      const hand = add(new THREE.Mesh(new THREE.BoxGeometry(2 * HAND.r, c.length, HAND.z[2] - HAND.z[0] + 2 * HAND.r), MAT.brass));
+      hand.geometry.translate(0, c.length / 2, 0);
+      hand.position.set(c.x, c.y, 0);
+      this.hands.push(hand);
+      add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 16).rotateX(Math.PI / 2), MAT.brass)).position.set(c.x, c.y, 0);
+    }
+    for (const q of L.searches) {
+      const head = add(new THREE.Group(), false);
+      const shade = new THREE.Mesh(SEARCH_SHADE, MAT.hook), bulb = new THREE.Mesh(new THREE.CircleGeometry(0.03, 20), BEAM_BULB);
+      shade.castShadow = true;
+      bulb.rotation.x = Math.PI / 2; bulb.position.y = -0.045;
+      const beam = new THREE.Mesh(new THREE.ConeGeometry(Math.tan(BEAM.half) * BEAM.reach, BEAM.reach, 32, 1, true).translate(0, -BEAM.reach / 2, 0), BEAM_CONE);
+      beam.renderOrder = 2;
+      head.add(shade, bulb, beam);
+      head.position.set(q.x, q.y, 0.02);
+      add(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.25, 6), MAT.hook), false).position.set(q.x, q.y + 0.13, 0.02);
+      this.searchHeads.push({ head, beam });
+    }
+    for (const _ of L.lifts) {
+      const weight = add(new THREE.Mesh(LIFT_WEIGHT, LEAD)), handle = add(new THREE.Mesh(LIFT_HANDLE, wood('#7a4e2c')));
+      handle.rotation.x = Math.PI / 2;
+      // the cord, down either side of the pulley: to the handle, to the weight
+      const cords = [0, 1].map(() => add(new THREE.Mesh(LIFT_CORD, LIFT_ROPE)));
+      this.lifts.push({ weight, handle, cords });
+    }
+    L.winds.forEach((w, k) => {
+      const up = Math.abs(w.vy) > Math.abs(w.vx), streaks: THREE.Mesh[] = [];
+      if (up) {
+        // a radiator under the warm air: its fins, painted white long ago
+        const r = add(new THREE.Group());
+        const width = Math.min(0.4, w.x1 - w.x0);
+        for (let x = -width / 2; x <= width / 2 + 1e-6; x += 0.035) { const fin = new THREE.Mesh(RADIATOR_FIN, RADIATOR); fin.position.x = x; fin.castShadow = fin.receiveShadow = true; r.add(fin); }
+        r.position.set((w.x0 + w.x1) / 2, w.y0 - 0.1, -ROOM.z + 0.03);
+      } else {
+        // a vent in the side wall, where the draught comes from
+        const vent = add(new THREE.Mesh(new THREE.BoxGeometry(0.02, Math.min(0.3, w.y1 - w.y0), 0.16), VENT));
+        vent.position.set(w.vx > 0 ? -ROOM.x + 0.01 : ROOM.x - 0.01, (w.y0 + w.y1) / 2, 0);
+      }
+      for (let j = 0; j < 7; j++) {
+        const m = add(new THREE.Mesh(up ? STREAK_UP : STREAK_ACROSS, STREAK.clone()), false);
+        m.userData = { u: j / 7, v: Math.random(), z: (Math.random() - 0.5) * 0.16 };
+        m.renderOrder = 2;
+        streaks.push(m);
+      }
+      this.draughts.push({ wind: k, streaks });
+    });
+    if (L.nets.some((n) => n.sticky)) {
+      const g = add(new THREE.Group(), false), body = new THREE.Mesh(PLANE_1, new THREE.MeshStandardMaterial({ map: art('spider').tex, transparent: true, alphaTest: 0.2, roughness: 0.8 }));
+      body.scale.set(0.05, 0.05, 1);
+      const silk = new THREE.Mesh(new THREE.CylinderGeometry(0.0006, 0.0006, 1, 4).translate(0, 0.5, 0), SILK);
+      g.add(body, silk);
+      g.visible = false;
+      this.spider = g;
+    }
+  }
+
+  /** the new things where the world has them now */
+  private moveThings(rules: Rules, world: World, now: number): void {
+    const L = world.level;
+    this.spools.forEach((g, k) => { const z = L.zips[k], len = Math.hypot(z.x1 - z.x0, z.y1 - z.y0), p = spoolAt(z, world.spools[k].d / len); g.position.set(p.x, p.y, 0); g.children[0].rotation.y = world.spools[k].d / SPOOL.r; });
+    this.hands.forEach((m, k) => { m.rotation.z = -world.hands[k]; });
+    this.searchHeads.forEach(({ head, beam }, k) => {
+      head.rotation.z = rules.beams[k] ?? 0;
+      (beam.material as THREE.Material).userData.strength.value = 0.07 + 0.05 * rules.dazzle;
+    });
+    this.lifts.forEach(({ weight, handle, cords }, k) => {
+      const l = L.lifts[k], b = L.bars[l.bar], d = world.lifts[k].d, p = handleAt(L, l, d);
+      const wx = b.x - l.side * (b.r + 0.004), wy = b.y - 0.1 - d;
+      handle.position.set(p.x, p.y, 0);
+      weight.position.set(wx, wy - 0.03, 0);
+      // (a cord of unit length, from its top down)
+      cords[0].position.set(p.x, b.y, 0); cords[0].scale.y = Math.max(0.001, b.y - p.y - HANDLE.r);
+      cords[1].position.set(wx, b.y, 0); cords[1].scale.y = Math.max(0.001, b.y - wy);
+    });
+    this.draughts.forEach(({ wind, streaks }) => {
+      const w = L.winds[wind], g = world.gusts[wind], up = Math.abs(w.vy) > Math.abs(w.vx);
+      for (const m of streaks) {
+        const d = m.userData as { u: number; v: number; z: number };
+        const u = (d.u + now * 0.35 * Math.hypot(w.vx, w.vy)) % 1;
+        if (up) m.position.set(w.x0 + (w.x1 - w.x0) * d.v + 0.02 * Math.sin(now * 3 + d.v * 9), w.y0 + (w.y1 - w.y0) * u, d.z);
+        else m.position.set(w.vx > 0 ? w.x0 + (w.x1 - w.x0) * u : w.x1 - (w.x1 - w.x0) * u, w.y0 + (w.y1 - w.y0) * d.v + 0.015 * Math.sin(now * 4 + d.v * 7), d.z);
+        (m.material as THREE.MeshBasicMaterial).opacity = 0.16 * g * Math.sin(Math.PI * u);
+      }
+    });
+    // the spider comes down its silk to the lace stuck in its web
+    if (this.spider) {
+      const stuck = rules.stuck[0], web = L.nets.find((n) => n.sticky)!;
+      this.spider.visible = !!stuck && rules.stuckTime > 1;
+      if (stuck && this.spider.visible) {
+        const x = world.sim.x, t = Math.min(1, (rules.stuckTime - 1) / (PLAY.spiderAfter - 1));
+        const sx = x[3 * stuck.lace], sy = x[3 * stuck.lace + 1], top = web.top + 0.15, y = top + (sy + 0.03 - top) * t;
+        this.spider.position.set(sx, y, 0.06);
+        const silk = this.spider.children[1];
+        silk.scale.y = Math.max(0.001, top - y);
+      }
+    }
+  }
+
   /** what the rules say, shown: eyelets threaded glow, gates light up as they near opening and slide away, pulls and posts light, buttons taken go */
   update(rules: Rules, world: World, t: number, dt: number): void {
     const now = performance.now() / 1000;
@@ -170,6 +362,7 @@ export class Scenery {
     });
     this.pulls.forEach((m, k) => (m.material as THREE.MeshStandardMaterial).emissive.set(rules.pulled[k] >= PLAY.pullTime ? '#f2c14e' : rules.pulled[k] > 0 ? '#6a4a00' : '#000000'));
     this.posts.forEach((m, k) => (m.material as THREE.MeshStandardMaterial).emissive.set(rules.isSaved(k) ? '#6a4a00' : '#000000'));
+    this.moveThings(rules, world, now);
     this.buttons.forEach((b, k) => {
       b.visible = !rules.isTaken(k);
       b.rotation.y = Math.sin(now * 1.7 + k) * 0.6;
@@ -180,10 +373,11 @@ export class Scenery {
   dispose(): void {
     this.group.removeFromParent();
     this.decor.dispose();
-    const shared = new Set<THREE.Material>([...Object.values(MAT), FLOOR, FLAG, HOOK, PIN, HOLE, BLADE, FLAME, WATER, ...MARKS, ...woods.values()]);
+    const shared = new Set<THREE.Material>([...Object.values(MAT), FLOOR, FLAG, HOOK, PIN, HOLE, BLADE, FLAME, WATER, ...MARKS, ...woods.values(), BEAM_BULB, BEAM_CONE, LEAD, LIFT_ROPE, RADIATOR, VENT, SILK, ...(face ? [face] : [])]);
+    const kept = new Set<THREE.BufferGeometry>([HOOK_SHAFT, HOOK_TIP, HOOK_PLATE, SPOOL_CORE, SPOOL_FLANGE, SEARCH_SHADE, LIFT_WEIGHT, LIFT_HANDLE, LIFT_CORD, RADIATOR_FIN, STREAK_UP, STREAK_ACROSS, PLANE_1]);
     this.group.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
-      if (o.geometry !== MARK && !keeps(o.geometry)) o.geometry.dispose();
+      if (o.geometry !== MARK && !kept.has(o.geometry) && !keeps(o.geometry)) o.geometry.dispose();
       if (!shared.has(o.material) && !keeps(o.material)) (o.material as THREE.Material).dispose();
     });
   }

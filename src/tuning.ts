@@ -75,6 +75,34 @@ export const PLAY = {
   /** the aglet: the nodes at the tip of the end the pointer leads that slip through the cords while Space is held */
   aglet: 4,
   /**
+   * Caught in a knot, the aglet can be forced: with Space held and the end
+   * pulling harder than `forceLoad` × the lace's weight while it hardly
+   * moves (slower than `forceStuck` m/s: it is caught), the stretch that
+   * slips through grows by `forceRate` nodes a second, up to `forceMost`;
+   * what slips beyond the aglet is squeezed through and frays (`forceWear`
+   * a second). Let go of Space, it is the aglet again.
+   */
+  /**
+   * Lying on something with nothing holding it, the lace can throw its free
+   * end, as a rope is whipped up: a flick of the pointer faster than
+   * `throwFlick` (m/s), towards where it goes, sends the last `throwNodes`
+   * of the end off at up to `throwSpeed` (m/s), less inward, and for
+   * `throwTime` s the end pulls `throwMuscle` × the lace's weight. Once every
+   * `throwRest` s. The button held as it flies, the end grips what it
+   * touches at the top of its flight.
+   */
+  throwFlick: 1.6,
+  throwSpeed: 5.5,
+  throwNodes: 26,
+  throwRest: 0.9,
+  throwTime: 0.2,
+  throwMuscle: 2,
+  forceLoad: 0.55,
+  forceStuck: 0.15,
+  forceRate: 6,
+  forceMost: 16,
+  forceWear: 0.12,
+  /**
    * Wear of the lace, node by node, 0 new to 1 torn through (it breaks
    * there): a blade's touch, a flame each second it stays, each metre the
    * lace slides over a surface (× the surface's `wear`), each m/s of a
@@ -90,7 +118,30 @@ export const PLAY = {
   shrink: 0.08,
   soak: 0.6,
   dryTime: 8,
+  /** how fast a wind drags the lace's nodes to its speed (/s), blowing full */
+  windDrag: 9,
+  /** a thread gives way once it has borne the lace this long (s), if its part does not say */
+  thread: 2.5,
+  /** the lace stuck to a cobweb tears free when the end the pointer leads pulls this hard (× its weight), or a stuck node is pulled this far from the web (m) */
+  webPull: 0.6,
+  webStretch: 0.02,
+  /** how long the lace may stay stuck to a web before its spider comes down to it (s), and how much a bite wears the lace */
+  spiderAfter: 4,
+  spiderBite: 0.35,
+  /** in the beam of a searching lamp: the grips tire this much faster, the lace burns this much a second */
+  dazzle: 2.5,
+  beamWear: 0.08,
 };
+
+/**
+ * A lift: how much of its weight the friction of the pulley takes (× the
+ * lace's weight), the top speed of the handle going up (m/s); let go of
+ * this long (s), it goes back down at `back` m/s
+ */
+export const LIFT = { friction: 1.35, top: 1.1, wait: 2.5, back: 0.5 };
+
+/** the spool of a zip line: its top speed and drag (m/s, /s) on the way down; let go of this long (s), it is pulled back up at `back` m/s */
+export const ZIP = { top: 1.4, drag: 1.6, wait: 1.5, back: 0.25 };
 
 /**
  * How long the house lasts. The course reckons the time a good player takes

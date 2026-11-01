@@ -29,7 +29,8 @@
 import { emptyLevel, merge, type Level, type Shelf } from '../level/level';
 import { STORY } from '../tuning';
 import { FLOORS, HOUSE, nextFloor } from './floors';
-import { ASCENTS, KEYS, OBSTACLES, pushBar, start, TWISTS, type Ascent, type Ctx, type Hold, type Key, type Obstacle, type Twist } from './parts';
+import { made, type Catalog, type Origins } from './layout';
+import { parts, pushBar, start, type Ascent, type Ctx, type Hold, type Key, type Obstacle, type Twist } from './parts';
 
 export interface Section {
   index: number;
@@ -47,9 +48,13 @@ export interface Section {
   ceiling?: number;
   /** the seconds a good player would have taken from the start to its top */
   pace: number;
+  /** its parts' effort together */
+  effort: number;
   ascent?: Ascent;
   obstacle?: Obstacle;
   key?: Key;
+  /** (traced: see `Options`) what made each thing in it */
+  origins?: Origins;
 }
 
 /** what the decor needs to know of a section */
@@ -70,21 +75,44 @@ export interface Storey {
 
 interface Combo { ascent: Ascent; obstacle: Obstacle; key?: Key; effort: number; weight: number }
 
-const POST = KEYS.find((k) => k.name === 'poteau')!;
-const TRAPDOOR = OBSTACLES.find((o) => o.locked)!;
+/** the parts a section is made of, by their names, if they fit it (to try a part out: the editor, `?at=` in the game) */
+export interface Forced { ascent?: string; obstacle?: string; key?: string }
+
+export interface Options {
+  /** sections whose parts are chosen, not drawn */
+  force?: Record<number, Forced>;
+  /** keep what made each thing of each section (the editor shows it) */
+  trace?: boolean;
+}
 
 export class Course {
   private sections: Section[] = [];
   private seen = new Set<string>();
   private rnd: () => number;
+  private ascents: Ascent[];
+  private obstacles: Obstacle[];
+  private keys: Key[];
+  /** the key that ends a stretch, the trapdoor it opens */
+  private post: Key;
+  private trapdoor: Obstacle;
+  private twists: Twist[];
   /** the stretch being laid out: its twist, the sections left before its post */
-  private twist = TWISTS[0];
+  private twist: Twist;
   private left = 0;
   private floor = 0;
 
-  constructor(readonly seed: number) {
+  constructor(readonly seed: number, readonly catalog: Catalog, private options: Options = {}) {
     let s = (seed * 7919 + 104729) % 2147483647 || 1;
     this.rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    ({ ascents: this.ascents, obstacles: this.obstacles, keys: this.keys } = parts(catalog));
+    const post = this.keys.find((k) => k.name === 'poteau'), trapdoor = this.obstacles.find((o) => o.locked);
+    if (!post) throw new Error('le catalogue n\'a pas de clé « poteau » : un tronçon finit sur un poteau');
+    if (!trapdoor) throw new Error('le catalogue n\'a pas d\'obstacle fermé (une trappe) : un tronçon finit sur une trappe');
+    if (!catalog.twists.length) throw new Error('le catalogue n\'a pas de variante de tronçon');
+    this.post = post;
+    this.trapdoor = trapdoor;
+    this.twists = catalog.twists;
+    this.twist = this.twists[0];
   }
 
   /** section k, laid out (with all those below it) the first time it is asked for */
@@ -137,11 +165,12 @@ export class Course {
   private next(): void {
     const index = this.sections.length, prev = this.sections[index - 1];
     const L = emptyLevel(prev ? prev.exit.y : 0, 0);
-    const c: Ctx = { L, twist: this.twist, rnd: this.rnd, first: (name) => !this.seen.has(name) };
+    const origins: Origins | undefined = this.options.trace ? {} : undefined;
+    const c: Ctx = { L, twist: this.twist, rnd: this.rnd, first: (name) => !this.seen.has(name), origins };
     if (!prev) {
-      const exit = start(c);
+      const exit = made(c, { part: 'départ', path: '' }, () => start(c));
       L.top = exit.y;
-      this.sections.push({ index, name: 'départ', post: true, level: L, exit, twist: this.twist, floor: 0, pace: 0 });
+      this.sections.push({ index, name: 'départ', post: true, level: L, exit, twist: this.twist, floor: 0, pace: 0, effort: 0, origins });
       this.newStretch(index);
       return;
     }
@@ -153,15 +182,15 @@ export class Course {
     const k = ascent.side === 'cross' ? -s : ascent.side === 'same' ? s : this.rnd() < 0.5 ? 1 : -1;
     const rise = (ascent.rise[0] + (ascent.rise[1] - ascent.rise[0]) * this.rnd()) * this.twist.gap;
     const st = { x: k * (key ? key.x : obstacle.x), y: prev.exit.y + rise };
-    ascent.lay(c, prev.exit, st);
-    pushBar(c, st.x, st.y);
-    const exit = obstacle.lay(c, k, st, key);
+    made(c, { part: ascent.name, path: '' }, () => ascent.lay(c, prev.exit, st));
+    made(c, { part: 'station', path: '' }, () => pushBar(c, st.x, st.y));
+    const exit = made(c, { part: obstacle.name, path: '' }, () => obstacle.lay(c, k, st, key));
     for (const p of [ascent, obstacle, key]) if (p) this.seen.add(p.name);
     L.top = exit.y;
     const name = [ascent.name, obstacle.locked ? key!.name : obstacle.name].filter((n) => n !== 'rien').join(', ');
     const ceiling = post ? L.gates.find((g) => g.post !== undefined)?.y1 : undefined;
     const pace = prev.pace + STORY.pace.base + STORY.pace.effort * combo.effort + STORY.pace.metre * (exit.y - prev.exit.y);
-    this.sections.push({ index, name, post, level: L, exit, twist: this.twist, floor: this.floor, ceiling, pace, ascent, obstacle, key });
+    this.sections.push({ index, name, post, level: L, exit, twist: this.twist, floor: this.floor, ceiling, pace, effort: combo.effort, ascent, obstacle, key, origins });
     if (post) this.newStretch(index); else this.left--;
   }
 
@@ -172,8 +201,9 @@ export class Course {
    * house's time is up; up there, a new one each stretch.
    */
   private newStretch(index: number): void {
-    this.left = 2 + Math.min(3, Math.floor(index / 20)) + (this.rnd() < 0.3 ? 1 : 0);
-    this.twist = index < 12 ? TWISTS[0] : TWISTS[Math.floor(this.rnd() * TWISTS.length)];
+    const { stretch, twistFrom } = this.catalog.course, twists = this.twists;
+    this.left = stretch.base + Math.min(stretch.most, Math.floor(index / stretch.every)) + (this.rnd() < stretch.longer ? 1 : 0);
+    this.twist = index < twistFrom ? twists[0] : twists[Math.floor(this.rnd() * twists.length)];
     if (index === 0) return;
     const f = this.floor, due = Math.floor((this.sections[index].pace / STORY.skyAfter) * HOUSE);
     this.floor = f >= HOUSE ? nextFloor(f) : Math.min(f + 1, due, HOUSE);
@@ -183,15 +213,16 @@ export class Course {
   /** the parts of section `index`, as the rules allow (see the top of this file) */
   private choose(index: number, prev: Section, post: boolean): Combo {
     const open = <T extends { from: number; name: string }>(a: T[]) => a.filter((p) => p.from <= index);
-    const heavy = (a?: Ascent) => (a?.nodes ?? 0) > 100;
-    const cap = 3 + Math.min(3, Math.floor(index / 15));
-    const favours = FLOORS[this.floor].favours ?? {}, favour = (name?: string) => (name && favours[name]) || 1;
+    const rules = this.catalog.course, POST = this.post, TRAPDOOR = this.trapdoor;
+    const heavy = (a?: Ascent) => (a?.nodes ?? 0) > rules.heavy;
+    const cap = rules.cap.base + Math.min(rules.cap.most, Math.floor(index / rules.cap.every));
+    const favours = this.catalog.favours[FLOORS[this.floor].name] ?? {}, favour = (name?: string) => (name && favours[name]) || 1;
     const prevEffort = (prev.ascent?.effort ?? 0) + (prev.obstacle?.effort ?? 0) + (prev.key?.effort ?? 0);
     const combos: Combo[] = [];
-    for (const ascent of open(ASCENTS)) {
-      const obstacles = post ? [TRAPDOOR] : open(OBSTACLES);
+    for (const ascent of open(this.ascents)) {
+      const obstacles = post ? [TRAPDOOR] : open(this.obstacles);
       for (const obstacle of obstacles) {
-        const keys = obstacle.locked ? (post ? [POST] : open(KEYS).filter((q) => q !== POST)) : [undefined];
+        const keys = obstacle.locked ? (post ? [POST] : open(this.keys).filter((q) => q !== POST)) : [undefined];
         for (const key of keys) {
           const effort = ascent.effort + obstacle.effort + (key?.effort ?? 0);
           const weight = ascent.weight * (post ? 1 : obstacle.weight) * (key && !post ? key.weight : 1);
@@ -199,11 +230,24 @@ export class Course {
         }
       }
     }
+    // a section chosen (the editor, trying a part out): those combinations that have its parts, whether or not they come yet
+    const forced = this.options.force?.[index];
+    if (forced) {
+      const named = <T extends { name: string }>(a: T[], name?: string) => (name ? a.filter((p) => p.name === name) : a);
+      const keys = (o: Obstacle) => (o.locked ? (post ? [POST] : named(this.keys.filter((q) => q !== POST), forced.key)) : [undefined]);
+      const fit: Combo[] = [];
+      for (const ascent of named(this.ascents, forced.ascent)) {
+        for (const obstacle of post ? [TRAPDOOR] : named(this.obstacles, forced.obstacle ?? (forced.key ? TRAPDOOR.name : undefined))) {
+          for (const key of keys(obstacle)) fit.push({ ascent, obstacle, key, effort: ascent.effort + obstacle.effort + (key?.effort ?? 0), weight: 1 });
+        }
+      }
+      if (fit.length) return this.weighted(fit);
+    }
     const parts = (q: Combo) => [q.ascent, q.obstacle, q.key].filter((p) => p !== undefined);
     const novel = (q: Combo) => parts(q).filter((p) => !this.seen.has(p.name)).length;
     const most = Math.min(1, Math.max(...combos.map(novel)));
     // the rules, the most important first: the last ones give way first when nothing fits them all
-    const rules: ((q: Combo) => boolean)[] = [
+    const tests: ((q: Combo) => boolean)[] = [
       (q) => !(heavy(q.ascent) && heavy(prev.ascent)),
       (q) => q.ascent !== prev.ascent && (q.obstacle !== prev.obstacle || q.obstacle.name === 'rien') && (!q.key || q.key !== prev.key || post),
       (q) => q.effort <= cap,
@@ -212,8 +256,8 @@ export class Course {
       (q) => post || novel(q) === most,
       (q) => !novel(q) || parts(q).filter((p) => this.seen.has(p.name)).reduce((e, p) => e + p.effort, 0) <= 1,
     ];
-    for (let n = rules.length; n >= 0; n--) {
-      const fit = combos.filter((q) => rules.slice(0, n).every((r) => r(q)));
+    for (let n = tests.length; n >= 0; n--) {
+      const fit = combos.filter((q) => tests.slice(0, n).every((r) => r(q)));
       if (fit.length) return this.weighted(fit);
     }
     return combos[0];

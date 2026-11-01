@@ -3,7 +3,9 @@
 // best height, the time played, when each floor was reached: what the pace
 // of the floors is tuned by, see STORY in tuning.ts).
 
-import { Course, type Storey } from '../gen/course';
+import CATALOG from '../gen/catalog.json';
+import { Course, type Forced, type Storey } from '../gen/course';
+import type { Catalog } from '../gen/layout';
 import { placeKey, type Level } from '../level/level';
 import { PLAY, STORY } from '../tuning';
 import type { Save } from './rules';
@@ -31,9 +33,13 @@ export class Climb {
     try { return JSON.parse(localStorage.getItem(KEY) ?? 'null'); } catch { return null; }
   }
 
-  /** a climb of course `seed`, from the start or (`kept`) from where it was left */
-  constructor(seed: number, kept: Kept | null = null) {
-    this.course = new Course(seed);
+  /**
+   * A climb of course `seed`, from the start or (`kept`) from where it was
+   * left. A trial (opened from the level editor: `force` chooses the parts of
+   * some sections) is never kept: the climb left last time stays as it was.
+   */
+  constructor(seed: number, kept: Kept | null = null, private trial?: { force: Record<number, Forced> }) {
+    this.course = new Course(seed, CATALOG as unknown as Catalog, { force: trial?.force });
     if (kept) {
       this.section = kept.section;
       this.pos = kept.pos.length ? Float64Array.from(kept.pos) : null;
@@ -115,6 +121,7 @@ export class Climb {
   /** what is kept for next time, `time` seconds into this visit */
   private keep(time: number): void {
     this.keptAt = time;
+    if (this.trial) return;
     const kept: Kept = { seed: this.course.seed, section: this.section, pos: this.pos ? Array.from(this.pos) : [], best: this.highest, time: this.before + time, floors: this.floors };
     try { localStorage.setItem(KEY, JSON.stringify(kept)); } catch { /* private window */ }
   }

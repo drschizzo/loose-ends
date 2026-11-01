@@ -22,7 +22,8 @@ import { snap, type Surface } from '../level/surfaces';
 import { LACE, PLAY, VINE } from '../tuning';
 
 export type Grip =
-  | { kind: 'surface'; x: number; y: number; z: number; drain: number; surface: number }
+  /** `carried`: how long more (s) the surface moves the grip along (a lift, a spool, a clock hand): the hand is carried, what it lags behind is not its effort */
+  | { kind: 'surface'; x: number; y: number; z: number; drain: number; surface: number; carried?: number }
   | { kind: 'cord'; bundle: number; node: number };
 
 export class End {
@@ -46,7 +47,9 @@ export type Hold = { kind: 'surface'; surface: number; x: number; y: number; z: 
 export type Event =
   | { end: End; what: 'took' | 'let go' | 'worn out' }
   /** the end took hold of something with the lace moving fast: the jolt cost it stamina, or tore it off (`torn`) */
-  | { end: End; what: 'jolt'; cost: number; torn: boolean };
+  | { end: End; what: 'jolt'; cost: number; torn: boolean }
+  /** the free end was thrown, flicked up from a lace lying with nothing holding it */
+  | { end: End; what: 'thrown' };
 
 const pullOut = { x: 0, y: 0, z: 0 };
 
@@ -72,8 +75,14 @@ export class Lace {
    * must be brought back the way it came, as with a real lace.
    */
   slipping = false;
+  /** how many nodes at the tip slip through now: the aglet, more while it is forced through a knot (see PLAY.forceLoad) */
+  slip: number = PLAY.aglet;
+  /** something other than a grip holds the lace up (a cobweb it is stuck to): the free end pulls as hard as from a bar */
+  held = false;
   /** how fast the grips tire, × PLAY.drain: the further up the climb, the faster (see `Climb.tiring`) */
   tiring = 1;
+  /** how fast the pointer moves (m/s, smoothed), where it was last step; how long before the end may be thrown again (s) */
+  private flick = { vx: 0, vy: 0, x: NaN, y: NaN, rest: 0, burst: 0 };
   /** where the free end is led: the pointer, followed with a little lag (the lace has some weight) */
   private follow = { x: 0, y: 0 };
   private followed: End | null = null;
@@ -158,6 +167,20 @@ export class Lace {
       const g = e.grip;
       if (g?.kind !== 'surface' || g.surface !== id) continue;
       g.x += dx; g.y += dy;
+      g.carried = 0.3;
+      this.sim.setTarget(e.node, g.x, g.y, g.z, PLAY.gripK, 0.25);
+    }
+  }
+
+  /** the surface `id` turned by `da` (rad, clockwise) round (cx, cy): the ends that grip it go round with it */
+  turnGrips(id: number, cx: number, cy: number, da: number): void {
+    const c = Math.cos(da), s = Math.sin(da);
+    for (const e of this.ends) {
+      const g = e.grip;
+      if (g?.kind !== 'surface' || g.surface !== id) continue;
+      const dx = g.x - cx, dy = g.y - cy;
+      g.x = cx + dx * c + dy * s; g.y = cy - dx * s + dy * c;
+      g.carried = 0.3;
       this.sim.setTarget(e.node, g.x, g.y, g.z, PLAY.gripK, 0.25);
     }
   }
@@ -210,6 +233,10 @@ export class Lace {
     }
     const a = this.leader();
     for (const e of this.ends) if (e !== a && !e.grip) this.sim.clearTarget(e.node);
+    // forced through a knot (pulled hard, the end hardly moves), more of the end slips through
+    const v = this.sim.v, n = a ? a.node : 0;
+    const forced = this.slipping && !!a && this.reach > PLAY.forceLoad && Math.hypot(v[3 * n], v[3 * n + 1], v[3 * n + 2]) < PLAY.forceStuck;
+    this.slip = !this.slipping ? PLAY.aglet : forced ? Math.min(PLAY.forceMost, this.slip + PLAY.forceRate * this.sim.P.dt) : Math.max(PLAY.aglet, this.slip - PLAY.forceRate * this.sim.P.dt);
     this.aglet(a);
     if (!a) return out;
     const b = this.ends[1 - this.ends.indexOf(a)];
@@ -228,14 +255,46 @@ export class Lace {
     // anchored (the other end grips, or the lace rests on a bar, a shelf), the
     // free end pulls hard, as over a pulley; on nothing but the floor, it can
     // only lift itself a little
-    this.supported = !g && this.rests(a);
-    this.sim.setTarget(a.node, tx, ty, tz, this.kUnit * (g || this.supported ? PLAY.muscle : PLAY.muscleLoose), PLAY.lead);
+    this.supported = !g && (this.held || this.rests(a));
+    if (!g && !this.supported && this.thrown(a, x, y)) out.push({ end: a, what: 'thrown' });
+    // thrown, the end pulls hard for a moment: the swing of the arm behind the flick
+    const burst = this.flick.burst > 0;
+    this.flick.burst = Math.max(0, this.flick.burst - this.sim.P.dt);
+    this.sim.setTarget(a.node, tx, ty, tz, this.kUnit * (burst ? PLAY.throwMuscle : g || this.supported ? PLAY.muscle : PLAY.muscleLoose), PLAY.lead);
     return out;
   }
 
   /**
+   * The pointer flicked fast towards where it goes, the lace lying with
+   * nothing holding it: the free end is whipped that way, its tip fastest.
+   * What lifts it is the speed it is given, not a pull: it rises, slows,
+   * falls back unless it grips at the top of its flight.
+   */
+  private thrown(a: End, x: number, y: number): boolean {
+    const f = this.flick, dt = this.sim.P.dt;
+    f.rest = Math.max(0, f.rest - dt);
+    if (Number.isNaN(f.x)) { f.x = x; f.y = y; }
+    // (the pointer moves once a frame, the solver steps once or twice: smoothed over a few frames)
+    const k = Math.min(1, dt / 0.05);
+    f.vx += ((x - f.x) / dt - f.vx) * k; f.vy += ((y - f.y) / dt - f.vy) * k;
+    f.x = x; f.y = y;
+    const p = this.at(a.node), speed = Math.hypot(f.vx, f.vy);
+    // fast, upward, and towards the pointer from the end
+    if (f.rest > 0 || speed < PLAY.throwFlick || f.vy < 0.3 * speed || (x - p[0]) * f.vx + (y - p[1]) * f.vy <= 0) return false;
+    f.rest = PLAY.throwRest;
+    f.burst = PLAY.throwTime;
+    const ux = f.vx / speed, uy = f.vy / speed, v = this.sim.v, dir = a.node < a.inward ? 1 : -1;
+    for (let j = 0; j < PLAY.throwNodes; j++) {
+      const i = a.node + dir * j, s = PLAY.throwSpeed * (1 - j / PLAY.throwNodes);
+      v[3 * i] = ux * s; v[3 * i + 1] = uy * s;
+    }
+    this.sim.wakeCable(this.sim.cableOf[a.node]);
+    return true;
+  }
+
+  /**
    * Whether the lace rests on something that holds it up (lying on top of a
-   * bar, a shelf, an eyelet: not on the floor, nor against a wall), away from
+   * bar, a shelf, an eyelet, a cord: not on the floor, nor against a wall), away from
    * end a, whose last stretch does not count: it is what lifts.
    */
   rests(a: End): boolean {
@@ -248,6 +307,11 @@ export class Lace {
         const q = snap(s, px, py, pz);
         // touching it, from above: lying on it
         if (q && q.d < 0.004 && q.ny > 0.3) return true;
+      }
+      // lying on a cord (a line, a net, a cord it is caught round): it holds the lace up as well
+      for (const c of this.cordNodes) {
+        const dx = px - x[3 * c], dy = py - x[3 * c + 1], dz = pz - x[3 * c + 2];
+        if (dy > 0.3 * LACE.radius && dx * dx + dy * dy + dz * dz < (LACE.radius + VINE.radius + 0.003) ** 2) return true;
       }
     }
     return false;
@@ -276,6 +340,8 @@ export class Lace {
         const ux = x[3 * j] - x[3 * i], uy = x[3 * j + 1] - x[3 * i + 1], uz = x[3 * j + 2] - x[3 * i + 2];
         const ul = Math.hypot(ux, uy, uz) || 1;
         over = Math.max(0, -(pullOut.x * ux + pullOut.y * uy + pullOut.z * uz) / ul / this.weight - 1);
+        // carried by what it grips, the hand lags its spring's target: not an effort of its own
+        if (g.carried) { g.carried = Math.max(0, g.carried - dt); over = 0; }
       }
       // the effort of this hand: the other end reaching from it, and what pulls it harder than the lace weighs
       const other = this.ends[1 - this.ends.indexOf(e)];
@@ -327,14 +393,20 @@ export class Lace {
   }
 
   /**
-   * The aglet of end a is a ghost while slipping, nothing else. Let go, it
-   * turns solid again where it is clear of the cords, and pushes them away
-   * where it is not.
+   * The aglet of end a is a ghost while slipping (the cords and the lace
+   * itself let it through), more of the end if forced (`slip`), nothing
+   * else. Let go, it turns solid again where it is clear of the cords, and
+   * pushes them away where it is not.
    */
   private aglet(a: End | null): void {
     const sim = this.sim, tip = this.slipping ? a : null;
     for (let i = this.start; i < this.start + this.count; i++) {
-      if (tip && Math.abs(i - tip.node) < PLAY.aglet) { if (sim.ghost[i] !== -1) { sim.ghost[i] = -1; sim.wakeCable(sim.cableOf[i]); } }
+      const d = tip ? Math.abs(i - tip.node) : Infinity;
+      if (d < this.slip) {
+        if (sim.ghost[i] !== -1) { sim.ghost[i] = -1; sim.wakeCable(sim.cableOf[i]); }
+        // squeezed through beyond the aglet, the fibres fray
+        if (d >= PLAY.aglet) this.harm(i, PLAY.forceWear * sim.P.dt, 0);
+      }
       else if (sim.ghost[i] === -1) sim.ghost[i] = sim.P.ghostFrames;
     }
   }
@@ -357,12 +429,46 @@ export class Lace {
     return last;
   }
 
+  /** whether most of the lace lies on something (a floor, a shelf, a bar): at rest on it, not hanging */
+  lying(): boolean {
+    const x = this.sim.x;
+    let on = 0;
+    for (let i = this.start; i < this.start + this.count; i += 4) {
+      if (this.surfaces.some((s) => { if (s.mat === 'wall') return false; const q = snap(s, x[3 * i], x[3 * i + 1], x[3 * i + 2]); return !!q && q.d < 2.5 * LACE.radius && q.ny > 0.3; })) on++;
+    }
+    return on * 4 > this.count / 2;
+  }
+
   /** whether the lace lies against another cord (every other node is enough) */
   againstCords(): boolean {
     const x = this.sim.x, near = (LACE.radius + VINE.radius + 0.003) ** 2;
     for (let i = this.start; i < this.start + this.count; i += 2) {
       for (const c of this.cordNodes) {
         const dx = x[3 * i] - x[3 * c], dy = x[3 * i + 1] - x[3 * c + 1], dz = x[3 * i + 2] - x[3 * c + 2];
+        if (dx * dx + dy * dy + dz * dz < near) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether the lace lies against itself, away along it, off the ground
+   * (looped round itself, knotted): lying in a heap on a floor or a shelf
+   * is no knot
+   */
+  againstItself(): boolean {
+    const x = this.sim.x, near = (2 * LACE.radius + 0.003) ** 2;
+    const lying = (i: number) => this.surfaces.some((s) => {
+      if (s.shape.kind !== 'box' || s.mat === 'wall') return false;
+      const q = snap(s, x[3 * i], x[3 * i + 1], x[3 * i + 2]);
+      // on it, or on the lace that lies on it
+      return !!q && q.d < 2.5 * LACE.radius && q.ny > 0.3;
+    });
+    for (let i = this.start; i < this.start + this.count; i += 2) {
+      if (lying(i)) continue;
+      for (let j = i + 8; j < this.start + this.count; j += 2) {
+        if (lying(j)) continue;
+        const dx = x[3 * i] - x[3 * j], dy = x[3 * i + 1] - x[3 * j + 1], dz = x[3 * i + 2] - x[3 * j + 2];
         if (dx * dx + dy * dy + dz * dz < near) return true;
       }
     }

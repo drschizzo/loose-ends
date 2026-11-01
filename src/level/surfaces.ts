@@ -4,10 +4,39 @@
 import * as THREE from 'three';
 import type { StaticShape } from '@drschizzo/avbd-cables';
 import { LACE } from '../tuning';
-import { MATS, ROOM, type Level, type Mat, type Ring } from './level';
+import { MATS, ROOM, type Clock, type Level, type Lift, type Mat, type Ring, type Zip } from './level';
 
-/** a static shape, and what it is in the level: the bar, gate or ring it belongs to (or −1) */
-export interface Surface { shape: StaticShape; mat: Mat; bar: number; gate: number; ring: number }
+/**
+ * A static shape, and what it is in the level: the bar, gate or ring it
+ * belongs to (or −1), or the part that moves it (the spool of zip line k,
+ * a stretch of the hand of clock k)
+ */
+export interface Surface { shape: StaticShape; mat: Mat; bar: number; gate: number; ring: number; moves?: { kind: 'spool' | 'hand' | 'handle'; k: number } }
+
+/** the spool of a zip line: its radius, how far below the wire it hangs */
+export const SPOOL = { r: 0.02, below: 0.035 };
+/** the hand of a clock: its thickness, and the depths of the three rods it is made of (so that the lace cannot pass in front of it or behind) */
+export const HAND = { r: 0.011, z: [-0.06, 0, 0.06] };
+
+/** where the spool of zip line z is when it has run `s` (0 to 1) of the way down */
+export function spoolAt(z: Zip, s: number): { x: number; y: number } {
+  const dx = z.x1 - z.x0, dy = z.y1 - z.y0, l = Math.hypot(dx, dy);
+  // below the wire, square to it
+  const flip = dx > 0 ? 1 : -1, nx = (flip * dy) / l, ny = (-flip * dx) / l;
+  return { x: z.x0 + dx * s + nx * SPOOL.below, y: z.y0 + dy * s + ny * SPOOL.below };
+}
+
+/** the handle of a lift: its radius; how far below the pulley it stops, hoisted */
+export const HANDLE = { r: 0.011, top: 0.13 };
+
+/** where the handle of lift l is, risen `d` (m) from where it hangs */
+export function handleAt(L: Level, l: Lift, d: number): { x: number; y: number } {
+  const b = L.bars[l.bar];
+  return { x: b.x + l.side * (b.r + 0.004), y: b.y - l.drop + d };
+}
+
+/** the tip of the hand of clock c at angle a (rad, from straight up, clockwise) */
+export const handTip = (c: Clock, a: number): [number, number] => [c.x + c.length * Math.sin(a), c.y + c.length * Math.cos(a)];
 
 /** the axis of a ring, and two directions across it */
 export function ringFrame(g: Ring): { n: THREE.Vector3; u: THREE.Vector3; v: THREE.Vector3 } {
@@ -47,6 +76,26 @@ export function surfaces(L: Level): Surface[] {
     }
   };
   L.rings.forEach((g, k) => ring(g, k, 0.008));
+  const capsule = (ax: number, ay: number, az: number, bx: number, by: number, bz: number, r: number, mat: Mat, moves?: Surface['moves']) =>
+    out.push({ shape: { kind: 'capsule', ax, ay, az, bx, by, bz, r, mu: MATS[mat].mu }, mat, bar: -1, gate: -1, ring: -1, ...(moves ? { moves } : {}) });
+  // a coat hook: out of the wall, then turned up at its tip
+  for (const h of L.hooks) {
+    capsule(h.x, h.y, -ROOM.z - 0.01, h.x, h.y, 0.04, 0.007, 'hook');
+    capsule(h.x, h.y, 0.04, h.x, h.y + 0.035, 0.07, 0.007, 'hook');
+  }
+  L.zips.forEach((z, k) => {
+    capsule(z.x0, z.y0, 0, z.x1, z.y1, 0, 0.003, 'wire');
+    const p = spoolAt(z, 0);
+    capsule(p.x, p.y, -0.05, p.x, p.y, 0.05, SPOOL.r, 'wood', { kind: 'spool', k });
+  });
+  L.lifts.forEach((l, k) => {
+    const p = handleAt(L, l, 0);
+    capsule(p.x, p.y, -0.05, p.x, p.y, 0.05, HANDLE.r, 'wood', { kind: 'handle', k });
+  });
+  L.clocks.forEach((c, k) => {
+    const [tx, ty] = handTip(c, c.phase);
+    for (const z of HAND.z) capsule(c.x, c.y, z, tx, ty, z, HAND.r, 'brass', { kind: 'hand', k });
+  });
   return out;
 }
 
